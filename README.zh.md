@@ -1,4 +1,4 @@
-# DeepSeek Harness 安装器
+﻿# DeepSeek Harness 安装器
 
 [English](README.md) | 中文
 
@@ -24,8 +24,8 @@
 ### Windows
 
 ```powershell
-git clone https://github.com/plkiouyhh-max/dsh-installer.git
-cd dsh-installer
+git clone https://github.com/plkiouyhh-max/deepseek-harness-installer.git
+cd deepseek-harness-installer
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
 
@@ -57,8 +57,8 @@ powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -DesktopPath "D:\�
 ### macOS / Linux
 
 ```bash
-git clone https://github.com/plkiouyhh-max/dsh-installer.git
-cd dsh-installer
+git clone https://github.com/plkiouyhh-max/deepseek-harness-installer.git
+cd deepseek-harness-installer
 chmod +x scripts/install.sh
 ./scripts/install.sh
 ```
@@ -90,7 +90,7 @@ chmod +x scripts/install.sh
 ## 项目结构
 
 ```
-dsh-installer/
+deepseek-harness-installer/
 ├── README.md              # 英文文档
 ├── README.zh.md           # 中文文档
 ├── SKILL.md               # AI Agent 技能定义
@@ -108,11 +108,11 @@ dsh-installer/
 
 ### TRAE 用户
 
-将 `SKILL.md` 复制到 `.trae/skills/dsh-installer/` 目录：
+将 `SKILL.md` 复制到 `.trae/skills/deepseek-harness-installer/` 目录：
 
 ```bash
-mkdir -p .trae/skills/dsh-installer
-cp SKILL.md .trae/skills/dsh-installer/
+mkdir -p .trae/skills/deepseek-harness-installer
+cp SKILL.md .trae/skills/deepseek-harness-installer/
 ```
 
 然后直接对 Agent 说：*"安装 DeepSeek Harness 并创建桌面快捷方式"*

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 #
 # DeepSeek Harness (dsh) installer for macOS / Linux
 #
@@ -80,7 +80,7 @@ EOF
     Linux*)
         # Linux
         DESKTOP_DIR="$HOME/.local/share/applications"
-        DESKTOP_FILE="$DESKTOP_DIR/dsh-installer.desktop"
+        DESKTOP_FILE="$DESKTOP_DIR/deepseek-harness-installer.desktop"
         ICON_DEST="$HOME/.local/share/dsh-icon.svg"
         mkdir -p "$DESKTOP_DIR"
         mkdir -p "$(dirname "$ICON_DEST")"

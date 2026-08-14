@@ -1,4 +1,4 @@
-# DeepSeek Harness Installer
+﻿# DeepSeek Harness Installer
 
 English | [中文](README.zh.md)
 
@@ -24,8 +24,8 @@ The shortcut icon features a white whale (DeepSeek's brand mascot) on a blue gra
 ### Windows
 
 ```powershell
-git clone https://github.com/plkiouyhh-max/dsh-installer.git
-cd dsh-installer
+git clone https://github.com/plkiouyhh-max/deepseek-harness-installer.git
+cd deepseek-harness-installer
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
 
@@ -57,8 +57,8 @@ powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -DesktopPath "D:\De
 ### macOS / Linux
 
 ```bash
-git clone https://github.com/plkiouyhh-max/dsh-installer.git
-cd dsh-installer
+git clone https://github.com/plkiouyhh-max/deepseek-harness-installer.git
+cd deepseek-harness-installer
 chmod +x scripts/install.sh
 ./scripts/install.sh
 ```
@@ -90,7 +90,7 @@ chmod +x scripts/install.sh
 ## Project Structure
 
 ```
-dsh-installer/
+deepseek-harness-installer/
 ├── README.md              # English documentation
 ├── README.zh.md           # Chinese documentation
 ├── SKILL.md               # AI agent skill definition
@@ -108,11 +108,11 @@ This project includes a `SKILL.md` file that allows any AI agent (TRAE, Claude C
 
 ### For TRAE Users
 
-Copy the `SKILL.md` to your `.trae/skills/dsh-installer/` directory:
+Copy the `SKILL.md` to your `.trae/skills/deepseek-harness-installer/` directory:
 
 ```bash
-mkdir -p .trae/skills/dsh-installer
-cp SKILL.md .trae/skills/dsh-installer/
+mkdir -p .trae/skills/deepseek-harness-installer
+cp SKILL.md .trae/skills/deepseek-harness-installer/
 ```
 
 Then simply ask your agent: *"Install DeepSeek Harness and create a desktop shortcut."*

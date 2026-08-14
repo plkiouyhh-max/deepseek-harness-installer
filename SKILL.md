@@ -1,5 +1,5 @@
----
-name: "dsh-installer"
+﻿---
+name: "deepseek-harness-installer"
 description: "Installs DeepSeek Harness (dsh) and creates a one-click desktop shortcut with a custom whale icon. Invoke when user wants to install, set up, or create a shortcut for DeepSeek Harness."
 ---
 
