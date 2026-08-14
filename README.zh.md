@@ -102,24 +102,80 @@ deepseek-harness-installer/
     └── install.sh         # macOS / Linux 安装脚本
 ```
 
-## 作为 AI Agent 技能使用
+## 兼容的 AI Agent
 
-本项目包含 `SKILL.md` 文件，可被任意 AI Agent（TRAE、Claude Code 等）调用以自动完成安装。
+本项目包含 `SKILL.md` 文件，内含结构化的分步指令，任何 AI 编程助手都能读取并执行。以下是各主流 Agent 的使用方式：
 
-### TRAE 用户
+### TRAE
 
-将 `SKILL.md` 复制到 `.trae/skills/deepseek-harness-installer/` 目录：
+将 `SKILL.md` 复制到 `.trae/skills/` 目录：
 
 ```bash
 mkdir -p .trae/skills/deepseek-harness-installer
 cp SKILL.md .trae/skills/deepseek-harness-installer/
 ```
 
-然后直接对 Agent 说：*"安装 DeepSeek Harness 并创建桌面快捷方式"*
+然后对 Agent 说：*"安装 DeepSeek Harness 并创建桌面快捷方式"*
+
+### Claude Code
+
+```bash
+claude "Read SKILL.md from https://github.com/plkiouyhh-max/deepseek-harness-installer and execute the installation"
+```
+
+或将 `SKILL.md` 保存为项目根目录的 `CLAUDE.md`，然后让 Claude Code 执行。
+
+### Cursor
+
+将 `SKILL.md` 内容添加到项目的 `.cursorrules` 文件：
+
+```bash
+curl -o .cursorrules https://raw.githubusercontent.com/plkiouyhh-max/deepseek-harness-installer/main/SKILL.md
+```
+
+然后在 Cursor 对话框中输入：*"按照指令安装 DeepSeek Harness"*
+
+### Windsurf（Codeium）
+
+将 `SKILL.md` 保存为工作区的 `.windsurfrules`，然后对 Cascade 说：*"执行 DeepSeek Harness 的安装步骤"*
+
+### GitHub Copilot Chat
+
+在 VS Code 中使用 Copilot Chat 输入：
+
+```
+@workspace Read SKILL.md and follow the steps to install DeepSeek Harness
+```
+
+### Cline
+
+在 Cline 中创建新任务，输入：
+
+```
+Read and execute the instructions from https://github.com/plkiouyhh-max/deepseek-harness-installer/blob/main/SKILL.md
+```
+
+### Continue.dev
+
+将 `SKILL.md` 内容添加到 `.continuerc`，或直接粘贴到对话窗口中，然后让 Continue 执行。
+
+### Aider
+
+```bash
+aider --message "Read SKILL.md and run the DeepSeek Harness installation"
+```
+
+### OpenHands
+
+创建新任务，输入：
+
+```
+Clone https://github.com/plkiouyhh-max/deepseek-harness-installer and run the installation script for my OS.
+```
 
 ### 其他 Agent
 
-`SKILL.md` 包含详细的分步指令，任何 Agent 都可遵循执行。将 Agent 指向本仓库，让其运行安装即可。
+`SKILL.md` 包含通用的分步指令。只需将你的 Agent 指向[本仓库](https://github.com/plkiouyhh-max/deepseek-harness-installer)，让它按照指南执行安装即可。
 
 ## 手动安装（不使用脚本）
 

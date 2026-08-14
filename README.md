@@ -102,24 +102,80 @@ deepseek-harness-installer/
     └── install.sh         # macOS / Linux installer
 ```
 
-## Using as an AI Agent Skill
+## Compatible AI Agents
 
-This project includes a `SKILL.md` file that allows any AI agent (TRAE, Claude Code, etc.) to execute the installation automatically.
+This project includes a `SKILL.md` file with structured instructions that any AI coding agent can read and execute. Here's how to use it with popular agents:
 
-### For TRAE Users
+### TRAE
 
-Copy the `SKILL.md` to your `.trae/skills/deepseek-harness-installer/` directory:
+Copy `SKILL.md` to `.trae/skills/`:
 
 ```bash
 mkdir -p .trae/skills/deepseek-harness-installer
 cp SKILL.md .trae/skills/deepseek-harness-installer/
 ```
 
-Then simply ask your agent: *"Install DeepSeek Harness and create a desktop shortcut."*
+Then ask: *"Install DeepSeek Harness and create a desktop shortcut."*
 
-### For Other Agents
+### Claude Code
 
-The `SKILL.md` contains step-by-step instructions that any agent can follow. Point your agent to this repository and ask it to run the installation.
+```bash
+claude "Read SKILL.md from https://github.com/plkiouyhh-max/deepseek-harness-installer and execute the installation"
+```
+
+Or save `SKILL.md` as `CLAUDE.md` in your project root and ask Claude Code to execute it.
+
+### Cursor
+
+Add the `SKILL.md` content to `.cursorrules` in your project:
+
+```bash
+curl -o .cursorrules https://raw.githubusercontent.com/plkiouyhh-max/deepseek-harness-installer/main/SKILL.md
+```
+
+Then open Cursor chat and ask: *"Follow the instructions to install DeepSeek Harness."*
+
+### Windsurf (Codeium)
+
+Save `SKILL.md` as `.windsurfrules` in your workspace, then ask Cascade: *"Execute the DeepSeek Harness installation steps."*
+
+### GitHub Copilot Chat
+
+In VS Code with Copilot Chat, type:
+
+```
+@workspace Read SKILL.md and follow the steps to install DeepSeek Harness
+```
+
+### Cline
+
+Create a new task in Cline with the prompt:
+
+```
+Read and execute the instructions from https://github.com/plkiouyhh-max/deepseek-harness-installer/blob/main/SKILL.md
+```
+
+### Continue.dev
+
+Add the `SKILL.md` content to `.continuerc` or paste it into a new chat session, then ask Continue to execute.
+
+### Aider
+
+```bash
+aider --message "Read SKILL.md and run the DeepSeek Harness installation"
+```
+
+### OpenHands
+
+Create a new task with:
+
+```
+Clone https://github.com/plkiouyhh-max/deepseek-harness-installer and run the installation script for my OS.
+```
+
+### Any Other Agent
+
+The `SKILL.md` contains universal, step-by-step instructions. Simply point your agent to [this repository](https://github.com/plkiouyhh-max/deepseek-harness-installer) and ask it to follow the installation guide.
 
 ## Manual Installation (No Script)
 
