@@ -29,12 +29,35 @@ cd dsh-installer
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
 
-> **自定义桌面路径？** 添加参数 `-DesktopPath "E:\你的桌面"`
+<details>
+<summary><b>需要指定桌面路径？（点击展开）</b></summary>
+
+大多数用户**无需此参数** — 脚本会自动检测桌面位置。但如果你把桌面移动到了其他盘（例如 `D:\` 或 `E:\`），则需要手动指定。
+
+**如何找到你的桌面路径：**
+
+**方法一** — 文件资源管理器：
+1. 打开文件资源管理器
+2. 左侧右键点击 **桌面**（或 **此文件夹**）→ **属性**
+3. 查看 **位置** 一栏，即为你的桌面路径
+
+**方法二** — PowerShell 命令：
+```powershell
+[Environment]::GetFolderPath("Desktop")
+```
+运行后会输出桌面路径，例如 `C:\Users\你的用户名\Desktop` 或 `D:\桌面`。
+
+找到路径后，安装时加上 `-DesktopPath` 参数：
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -DesktopPath "D:\桌面"
+```
+
+</details>
 
 ### macOS / Linux
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dsh-installer.git
+git clone https://github.com/plkiouyhh-max/dsh-installer.git
 cd dsh-installer
 chmod +x scripts/install.sh
 ./scripts/install.sh

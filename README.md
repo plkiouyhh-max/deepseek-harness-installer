@@ -29,12 +29,35 @@ cd dsh-installer
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
 
-> **Custom desktop path?** Add `-DesktopPath "E:\YourDesktop"`
+<details>
+<summary><b>Need a custom desktop path? (Click to expand)</b></summary>
+
+Most users **don't need this** — the script auto-detects your desktop. But if your desktop has been moved to another drive (e.g., `D:\` or `E:\`), you can specify it manually.
+
+**How to find your desktop path:**
+
+**Method 1** — File Explorer:
+1. Open File Explorer
+2. Right-click **Desktop** in the left sidebar → **Properties**
+3. Check the **Location** field
+
+**Method 2** — PowerShell:
+```powershell
+[Environment]::GetFolderPath("Desktop")
+```
+This prints your desktop path, e.g., `C:\Users\YourName\Desktop` or `D:\Desktop`.
+
+Then install with the `-DesktopPath` parameter:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -DesktopPath "D:\Desktop"
+```
+
+</details>
 
 ### macOS / Linux
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dsh-installer.git
+git clone https://github.com/plkiouyhh-max/dsh-installer.git
 cd dsh-installer
 chmod +x scripts/install.sh
 ./scripts/install.sh
