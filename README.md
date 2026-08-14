@@ -24,7 +24,7 @@ The shortcut icon features a white whale (DeepSeek's brand mascot) on a blue gra
 ### Windows
 
 ```powershell
-git clone https://github.com/plkiouyhhhh-max/dsh-installer.git
+git clone https://github.com/plkiouyhh-max/dsh-installer.git
 cd dsh-installer
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
