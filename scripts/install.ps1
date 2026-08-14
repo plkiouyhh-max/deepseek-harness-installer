@@ -54,9 +54,23 @@ if (-not (Test-Path $DesktopPath)) {
 }
 Write-Host "  Desktop: $DesktopPath" -ForegroundColor Green
 
-# === Step 4: Generate icon ===
-Write-Host "[4/5] Generating custom icon..." -ForegroundColor Yellow
-Add-Type -AssemblyName System.Drawing
+# === Step 4: Get official DeepSeek icon ===
+Write-Host "[4/5] Getting official DeepSeek icon..." -ForegroundColor Yellow
+$icoPath = Join-Path $DesktopPath "dsh-official.ico"
+
+$downloaded = $false
+foreach ($u in @("https://www.deepseek.com/favicon.ico", "https://chat.deepseek.com/favicon.ico")) {
+    try {
+        Invoke-WebRequest -Uri $u -OutFile $icoPath -UseBasicParsing -TimeoutSec 20
+        if ((Get-Item $icoPath).Length -gt 1000) { $downloaded = $true; break }
+    } catch { continue }
+}
+
+if ($downloaded) {
+    Write-Host "  Official DeepSeek logo downloaded." -ForegroundColor Green
+} else {
+    Write-Host "  Download failed, generating fallback icon..." -ForegroundColor Yellow
+    Add-Type -AssemblyName System.Drawing
 
 $size = 256
 $bmp = New-Object System.Drawing.Bitmap($size, $size)
@@ -162,45 +176,67 @@ $gradBrush.Dispose()
 $spoutPen.Dispose()
 $g.Dispose()
 $bmp.Dispose()
-Write-Host "  Icon saved: $icoPath" -ForegroundColor Green
+Write-Host "  Fallback icon saved: $icoPath" -ForegroundColor Green
+}
+Write-Host "  Icon: $icoPath" -ForegroundColor Green
 
 # === Step 5: Create launcher and shortcut ===
 Write-Host "[5/5] Creating desktop shortcut..." -ForegroundColor Yellow
 
-# Create .bat launcher
-$batPath = Join-Path $DesktopPath "dsh-start.bat"
-$batContent = @'
-@echo off
-powershell -Command "try { $c = New-Object Net.Sockets.TcpClient; $c.Connect('127.0.0.1', 3080); $c.Close(); exit 0 } catch { exit 1 }" >nul 2>&1
-if %errorlevel%==0 (
-    start "" http://127.0.0.1:3080
+# Create PowerShell launcher (robust: no 'timeout' cmd dependency, error dialog on failure)
+$ps1Path = Join-Path $DesktopPath "dsh-start.ps1"
+$ps1Content = @'
+# DeepSeek Harness launcher
+$ErrorActionPreference = "SilentlyContinue"
+$url = "http://127.0.0.1:3080"
+
+function Test-Dsh {
+    try {
+        $c = New-Object Net.Sockets.TcpClient
+        $c.Connect("127.0.0.1", 3080)
+        $c.Close()
+        return $true
+    } catch { return $false }
+}
+
+if (Test-Dsh) {
+    Start-Process $url
     exit
-)
-start "DeepSeek Harness" dsh web
-set /a tries=0
-:wait
-timeout /t 2 /nobreak >nul
-set /a tries+=1
-powershell -Command "try { $c = New-Object Net.Sockets.TcpClient; $c.Connect('127.0.0.1', 3080); $c.Close(); exit 0 } catch { exit 1 }" >nul 2>&1
-if %errorlevel%==0 (
-    start "" http://127.0.0.1:3080
-    exit
-)
-if %tries% lss 20 goto wait
-echo DeepSeek Harness failed to start within 40 seconds.
-echo Please check the service window for errors.
-pause
+}
+
+# Locate npm global dsh.cmd
+$dsh = Join-Path $env:APPDATA "npm\dsh.cmd"
+if (-not (Test-Path $dsh)) { $dsh = "dsh" }
+
+Start-Process -FilePath $dsh -ArgumentList "web" -WindowStyle Minimized
+
+$ok = $false
+for ($i = 0; $i -lt 20; $i++) {
+    Start-Sleep -Seconds 2
+    if (Test-Dsh) { $ok = $true; break }
+}
+
+if ($ok) {
+    Start-Process $url
+} else {
+    Add-Type -AssemblyName System.Windows.Forms
+    [System.Windows.Forms.MessageBox]::Show(
+        "DeepSeek Harness failed to start within 40 seconds.`n`nPlease run 'dsh web' in a terminal to see the error.",
+        "DeepSeek Harness", "OK", "Error") | Out-Null
+}
 '@
-[System.IO.File]::WriteAllText($batPath, $batContent, [System.Text.Encoding]::Default)
+[System.IO.File]::WriteAllText($ps1Path, $ps1Content)
 
 # Create .lnk shortcut
 $lnkPath = Join-Path $DesktopPath "DeepSeek Harness.lnk"
 $WshShell = New-Object -ComObject WScript.Shell
 $Shortcut = $WshShell.CreateShortcut($lnkPath)
-$Shortcut.TargetPath = $batPath
+$Shortcut.TargetPath = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+$Shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$ps1Path`""
 $Shortcut.IconLocation = "$icoPath, 0"
 $Shortcut.WindowStyle = 7
 $Shortcut.WorkingDirectory = $DesktopPath
+$Shortcut.Description = "Start DeepSeek Harness and open web UI"
 $Shortcut.Save()
 
 Write-Host "  Shortcut created: $lnkPath" -ForegroundColor Green

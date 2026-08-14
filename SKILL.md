@@ -1,4 +1,4 @@
-﻿---
+---
 name: "deepseek-harness-installer"
 description: "Installs DeepSeek Harness (dsh) and creates a one-click desktop shortcut with a custom whale icon. Invoke when user wants to install, set up, or create a shortcut for DeepSeek Harness."
 ---
@@ -38,8 +38,8 @@ powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 The script will:
 1. Verify Node.js is installed
 2. Run `npm install -g @deepseek-ai/dsh`
-3. Generate a 256x256 `.ico` icon using System.Drawing (blue gradient + white whale)
-4. Create a `.bat` launcher that starts `dsh web` (if not running) and opens the browser
+3. Download the official DeepSeek logo as the `.ico` icon (falls back to a System.Drawing generated icon if offline)
+4. Create a robust PowerShell launcher (`dsh-start.ps1`) that starts `dsh web` (if not running), waits for port 3080, and opens the browser — with an error dialog if startup fails
 5. Create a `.lnk` desktop shortcut with the custom icon
 6. Clean up temporary files
 

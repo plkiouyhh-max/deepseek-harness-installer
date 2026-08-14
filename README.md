@@ -69,8 +69,8 @@ chmod +x scripts/install.sh
 |------|---------|---------------|
 | 1. Check Node.js | `node --version` | `node --version` |
 | 2. Install dsh | `npm install -g @deepseek-ai/dsh` | `sudo npm install -g @deepseek-ai/dsh` |
-| 3. Generate icon | System.Drawing (256x256 .ico) | Copy SVG icon |
-| 4. Create shortcut | `.bat` launcher + `.lnk` shortcut | `.command` (macOS) / `.desktop` (Linux) |
+| 3. Generate icon | Official DeepSeek logo (.ico, with offline fallback) | Copy SVG icon |
+| 4. Create shortcut | PowerShell launcher + `.lnk` shortcut | `.command` (macOS) / `.desktop` (Linux) |
 
 ## Using the Shortcut
 

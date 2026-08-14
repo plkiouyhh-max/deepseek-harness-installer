@@ -69,8 +69,8 @@ chmod +x scripts/install.sh
 |------|---------|---------------|
 | 1. 检查 Node.js | `node --version` | `node --version` |
 | 2. 安装 dsh | `npm install -g @deepseek-ai/dsh` | `sudo npm install -g @deepseek-ai/dsh` |
-| 3. 生成图标 | System.Drawing 生成 256x256 .ico | 复制 SVG 图标 |
-| 4. 创建快捷方式 | `.bat` 启动脚本 + `.lnk` 快捷方式 | `.command`（macOS）/ `.desktop`（Linux） |
+| 3. 生成图标 | 官方 DeepSeek Logo（.ico，离线时自动回退自绘图标） | 复制 SVG 图标 |
+| 4. 创建快捷方式 | PowerShell 启动脚本 + `.lnk` 快捷方式 | `.command`（macOS）/ `.desktop`（Linux） |
 
 ## 使用快捷方式
 
