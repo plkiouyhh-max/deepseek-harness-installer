@@ -1,4 +1,4 @@
-﻿# DeepSeek Harness 安装器
+# DeepSeek Harness 安装器
 
 [English](README.md) | 中文
 
@@ -197,8 +197,33 @@ dsh web
 |------|----------|
 | 找不到 `dsh` 命令 | 重启终端，或将 npm 全局 bin 路径加入 PATH |
 | 端口 3080 已被占用 | 关闭已有的 `dsh web` 进程 |
+| 端口 3080 权限拒绝（`EACCES`） | 见[下方说明](#端口-3080-被-windows-保留eacces-permission-denied) |
 | 图标不显示（Windows） | 按 F5 刷新桌面 |
 | npm 权限错误（Linux/macOS）| 使用 `sudo npm install -g @deepseek-ai/dsh` |
+
+### 端口 3080 被 Windows 保留（EACCES: permission denied）
+
+**症状**：`dsh web` 启动报错 `listen EACCES: permission denied 127.0.0.1:3080`，桌面快捷方式弹出"启动失败"提示。这不是安装器的问题，而是 Windows 的已知行为 —— 在使用 WSL2 / Hyper-V / Docker 的电脑上，**重启后**容易出现。
+
+**原因**：Windows 的 WinNAT 服务每次开机都会动态保留随机端口段。一旦 3080 落入保留区间，任何程序都无法监听该端口。
+
+**验证** — PowerShell 运行：
+
+```powershell
+netsh interface ipv4 show excludedportrange protocol=tcp
+```
+
+如果 3080 落在列出的某个区间内，执行下面的修复。
+
+**修复** — 为 dsh 永久预留 3080 端口（一次性操作，重启后依然有效）。以**管理员身份**打开 PowerShell 或 CMD，运行：
+
+```powershell
+net stop winnat
+netsh int ipv4 add excludedportrange protocol=tcp startport=3080 numberofports=1
+net start winnat
+```
+
+运行后 `dsh web` 和桌面快捷方式即可恢复正常，且重启电脑后不会再出现此问题。
 
 ## 关于 DeepSeek Harness
 

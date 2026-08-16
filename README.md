@@ -1,4 +1,4 @@
-﻿# DeepSeek Harness Installer
+# DeepSeek Harness Installer
 
 English | [中文](README.zh.md)
 
@@ -197,8 +197,33 @@ dsh web
 |---------|----------|
 | `dsh` command not found | Restart terminal, or add npm global bin to PATH |
 | Port 3080 already in use | Close existing `dsh web` process |
+| Port 3080 permission denied (`EACCES`) | See [below](#port-3080-blocked-by-windows-eacces-permission-denied) |
 | Icon not showing (Windows) | Press F5 to refresh desktop |
 | npm permission error (Linux/macOS) | Use `sudo npm install -g @deepseek-ai/dsh` |
+
+### Port 3080 blocked by Windows (EACCES: permission denied)
+
+**Symptom**: `dsh web` fails with `listen EACCES: permission denied 127.0.0.1:3080`, and the desktop shortcut shows a "failed to start" dialog. This is a Windows quirk, not an installer bug — it typically appears **after a reboot** on machines using WSL2 / Hyper-V / Docker.
+
+**Cause**: The Windows WinNAT service dynamically reserves random port ranges at every boot. If port 3080 happens to fall into a reserved range, no application is allowed to listen on it.
+
+**Check** — run in PowerShell:
+
+```powershell
+netsh interface ipv4 show excludedportrange protocol=tcp
+```
+
+If 3080 falls inside any listed range, apply the fix below.
+
+**Fix** — permanently reserve port 3080 for dsh (one-time, survives reboots). Open **PowerShell or CMD as Administrator** and run:
+
+```powershell
+net stop winnat
+netsh int ipv4 add excludedportrange protocol=tcp startport=3080 numberofports=1
+net start winnat
+```
+
+After this, `dsh web` and the desktop shortcut will work normally again — permanently, even across reboots.
 
 ## About DeepSeek Harness
 

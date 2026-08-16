@@ -86,4 +86,5 @@ After installation, inform the user:
 
 - **`dsh` not found after install**: Restart terminal or run `npm config get prefix` to find the global bin path and add it to PATH.
 - **Port 3080 in use**: Close any existing `dsh web` process or specify a different port.
+- **Port 3080 `EACCES` on Windows** (`listen EACCES: permission denied 127.0.0.1:3080`, typically after reboot on WSL2/Hyper-V/Docker machines): WinNAT reserved the port range. Verify with `netsh interface ipv4 show excludedportrange protocol=tcp`; if 3080 is inside a range, fix in an elevated shell: `net stop winnat; netsh int ipv4 add excludedportrange protocol=tcp startport=3080 numberofports=1; net start winnat`. One-time fix, survives reboots.
 - **Icon not showing**: On Windows, refresh the desktop (F5) or clear icon cache.
