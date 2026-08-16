@@ -10,8 +10,9 @@ Automates the installation of [DeepSeek Harness](https://github.com/deepseek-ai/
 ## What This Skill Does
 
 1. Installs the `@deepseek-ai/dsh` npm package globally
-2. Uses the official DeepSeek logo as the icon (falls back to a generated icon offline)
-3. Creates a desktop shortcut that starts `dsh web` and opens the browser automatically
+2. Installs plugins into the `web` profile (default: `dsh-web-plugin-manager`, a plugin marketplace inside the Web UI); installs `pnpm` automatically if missing
+3. Uses the official DeepSeek logo as the icon (falls back to a generated icon offline)
+4. Creates a desktop shortcut that starts `dsh web` and opens the browser automatically
 
 ## Prerequisites
 
@@ -32,33 +33,51 @@ Detect the OS to choose the correct script:
 #### Windows (PowerShell)
 
 ```powershell
+# Default (installs dsh-web-plugin-manager)
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
+
+# Custom plugin set
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -Plugins "dsh-web-plugin-manager","dsh-better-sidebar"
+
+# Core only, no plugins
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -NoPlugins
 ```
 
 The script will:
 1. Verify Node.js is installed
 2. Run `npm install -g @deepseek-ai/dsh`
-3. Download the official DeepSeek logo as the `.ico` icon (falls back to a System.Drawing generated icon if offline)
-4. Create a robust PowerShell launcher (`dsh-start.ps1`) that starts `dsh web` (if not running), waits for port 3080, and opens the browser — with an error dialog if startup fails
-5. Create a `.lnk` desktop shortcut with the custom icon
-6. Clean up temporary files
+3. Install pnpm if missing, then install each plugin via `dsh plugin --profile web add <package>` (skippable with `-NoPlugins`)
+4. Download the official DeepSeek logo as the `.ico` icon (falls back to a System.Drawing generated icon if offline)
+5. Create a robust PowerShell launcher (`dsh-start.ps1`) that starts `dsh web` (if not running), waits for port 3080, and opens the browser — with an error dialog if startup fails
+6. Create a `.lnk` desktop shortcut with the custom icon
+7. Clean up temporary files
 
 #### macOS / Linux (Bash)
 
 ```bash
 chmod +x scripts/install.sh
+
+# Default (installs dsh-web-plugin-manager)
 ./scripts/install.sh
+
+# Custom plugin set
+PLUGINS="dsh-web-plugin-manager dsh-better-sidebar" ./scripts/install.sh
+
+# Core only, no plugins
+PLUGINS="" ./scripts/install.sh
 ```
 
 The script will:
 1. Verify Node.js is installed
 2. Run `sudo npm install -g @deepseek-ai/dsh`
-3. Create a `.desktop` entry with the SVG icon
-4. Add the launcher to the desktop
+3. Install pnpm if missing, then install each plugin via `dsh plugin --profile web add <package>`
+4. Create a `.desktop` entry with the SVG icon
+5. Add the launcher to the desktop
 
 ### Step 3: Verify
 
 - Check that the `dsh` command is available: `dsh --version` or `dsh --help`
+- Check plugin registration: the plugin should appear in `~/.dsh/profiles/web/package.json` under `dsh.profile.bundles`
 - On Windows: verify the shortcut appears on the desktop
 - On macOS/Linux: verify the `.desktop` file is created
 

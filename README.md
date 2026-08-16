@@ -6,6 +6,7 @@ One-click installer for [DeepSeek Harness](https://github.com/deepseek-ai/deepse
 
 This tool automatically:
 - Installs the `@deepseek-ai/dsh` npm package globally
+- Installs plugins (defaults to `dsh-web-plugin-manager` — a plugin marketplace inside the Web UI)
 - Uses the official DeepSeek logo as the desktop icon (offline fallback: generated icon)
 - Creates a one-click desktop shortcut that starts the service and opens the browser
 
@@ -69,8 +70,48 @@ chmod +x scripts/install.sh
 |------|---------|---------------|
 | 1. Check Node.js | `node --version` | `node --version` |
 | 2. Install dsh | `npm install -g @deepseek-ai/dsh` | `sudo npm install -g @deepseek-ai/dsh` |
-| 3. Generate icon | Official DeepSeek logo (.ico, with offline fallback) | Copy SVG icon |
-| 4. Create shortcut | PowerShell launcher + `.lnk` shortcut | `.command` (macOS) / `.desktop` (Linux) |
+| 3. Install plugins | Installs pnpm if missing, then `dsh plugin --profile web add <pkg>` | Same |
+| 4. Generate icon | Official DeepSeek logo (.ico, with offline fallback) | Copy SVG icon |
+| 5. Create shortcut | PowerShell launcher + `.lnk` shortcut | `.command` (macOS) / `.desktop` (Linux) |
+
+## Bundled Plugins
+
+By default the installer adds [dsh-web-plugin-manager](https://www.npmjs.com/package/dsh-web-plugin-manager), which gives you a plugin marketplace inside the Web UI — browse, install, enable/disable and remove plugins without touching a terminal.
+
+**Customize which plugins get installed:**
+
+```powershell
+# Windows — a custom set
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -Plugins "dsh-web-plugin-manager","dsh-better-sidebar"
+
+# Windows — core only, no plugins
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -NoPlugins
+```
+
+```bash
+# macOS / Linux — a custom set
+PLUGINS="dsh-web-plugin-manager dsh-better-sidebar" ./scripts/install.sh
+
+# macOS / Linux — core only, no plugins
+PLUGINS="" ./scripts/install.sh
+```
+
+**Install more plugins anytime:**
+
+```bash
+dsh plugin --profile web add <package>
+```
+
+Popular community plugins (search [npm](https://www.npmjs.com/search?q=dsh) for more):
+
+| Plugin | Description |
+|--------|-------------|
+| `dsh-web-plugin-manager` | Plugin marketplace inside the Web UI |
+| `dsh-better-sidebar` | VSCode-like sidebar (explorer / terminal / git / browser) |
+| `dsh-pocket` | Access your DSH from a phone (LAN + public network) |
+| `@linxin666/dsh-pet` | Floating desktop pet that reacts to model activity |
+
+> Note: plugin installation requires `pnpm`; the installer installs it automatically if missing. Plugins load the next time `dsh web` starts.
 
 ## Using the Shortcut
 

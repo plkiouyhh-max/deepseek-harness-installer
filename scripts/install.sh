@@ -2,11 +2,20 @@
 #
 # DeepSeek Harness (dsh) installer for macOS / Linux
 #
-# Installs @deepseek-ai/dsh globally, creates a .desktop entry
-# (Linux) or .command script (macOS) with a custom icon.
+# Installs @deepseek-ai/dsh globally, optionally installs plugins,
+# and creates a .desktop entry (Linux) or .command script (macOS).
+#
+# Usage:
+#   ./install.sh                                  # default: installs dsh-web-plugin-manager
+#   PLUGINS="a b" ./install.sh                    # custom plugin list (space-separated)
+#   PLUGINS="" ./install.sh                       # skip plugins
 #
 
 set -e
+
+# Plugin list (override with PLUGINS env var; empty string disables)
+DEFAULT_PLUGINS="dsh-web-plugin-manager"
+PLUGINS="${PLUGINS-${DEFAULT_PLUGINS}}"
 
 echo ""
 echo "========================================"
@@ -15,7 +24,7 @@ echo "========================================"
 echo ""
 
 # === Step 1: Check Node.js ===
-echo "[1/4] Checking Node.js..."
+echo "[1/5] Checking Node.js..."
 if command -v node &>/dev/null; then
     NODE_VER=$(node --version)
     echo "  Node.js $NODE_VER found."
@@ -26,7 +35,7 @@ else
 fi
 
 # === Step 2: Install dsh ===
-echo "[2/4] Installing @deepseek-ai/dsh globally..."
+echo "[2/5] Installing @deepseek-ai/dsh globally..."
 if npm install -g @deepseek-ai/dsh; then
     echo "  dsh installed successfully."
 else
@@ -35,8 +44,42 @@ else
     echo "  dsh installed successfully."
 fi
 
-# === Step 3: Determine platform and paths ===
-echo "[3/4] Setting up launcher..."
+# === Step 3: Install plugins ===
+if [ -z "$PLUGINS" ]; then
+    echo "[3/5] Skipping plugins (PLUGINS is empty)."
+else
+    echo "[3/5] Installing plugins: $PLUGINS"
+
+    # Refresh command lookup so freshly installed binaries are found
+    hash -r 2>/dev/null || true
+
+    # dsh plugin requires pnpm
+    PNPM_OK=true
+    if ! command -v pnpm &>/dev/null; then
+        echo "  Installing pnpm (required by 'dsh plugin')..."
+        if ! (npm install -g pnpm 2>/dev/null || sudo npm install -g pnpm); then
+            echo "  WARNING: failed to install pnpm; skipping plugins."
+            echo "  Retry later with: npm install -g pnpm && dsh plugin --profile web add <package>"
+            PNPM_OK=false
+        fi
+    fi
+
+    if $PNPM_OK; then
+        FAILED=""
+        for p in $PLUGINS; do
+            if dsh plugin --profile web add "$p"; then
+                echo "  Installed: $p"
+            else
+                echo "  WARNING: failed to install $p (retry later with: dsh plugin --profile web add $p)"
+                FAILED="$FAILED $p"
+            fi
+        done
+        [ -n "$FAILED" ] || echo "  Plugins installed. They load on next 'dsh web' start."
+    fi
+fi
+
+# === Step 4: Determine platform and paths ===
+echo "[4/5] Setting up launcher..."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ICON_SRC="$SCRIPT_DIR/../assets/dsh-icon.svg"
@@ -137,8 +180,8 @@ DESKTOP
         ;;
 esac
 
-# === Step 4: Done ===
-echo "[4/4] Done!"
+# === Step 5: Done ===
+echo "[5/5] Done!"
 echo ""
 echo "========================================"
 echo "  Installation Complete!"
@@ -151,4 +194,7 @@ echo "  The Web UI will open at http://127.0.0.1:3080"
 echo ""
 echo "  First time? Configure your model:"
 echo "    Settings -> Models -> Enter API Key"
+echo ""
+echo "  Manage plugins from the Web UI (dsh-web-plugin-manager)"
+echo "  or via: dsh plugin --profile web add <package>"
 echo ""

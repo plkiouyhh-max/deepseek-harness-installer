@@ -6,6 +6,7 @@
 
 本工具自动完成：
 - 全局安装 `@deepseek-ai/dsh` npm 包
+- 安装插件（默认装 `dsh-web-plugin-manager` —— 在 Web UI 里直接管理/安装插件的插件市场）
 - 使用 DeepSeek 官方 Logo 作为桌面图标（离线时回退自绘图标）
 - 创建一键快捷方式，点击即启动服务并打开浏览器
 
@@ -69,8 +70,48 @@ chmod +x scripts/install.sh
 |------|---------|---------------|
 | 1. 检查 Node.js | `node --version` | `node --version` |
 | 2. 安装 dsh | `npm install -g @deepseek-ai/dsh` | `sudo npm install -g @deepseek-ai/dsh` |
-| 3. 生成图标 | 官方 DeepSeek Logo（.ico，离线时自动回退自绘图标） | 复制 SVG 图标 |
-| 4. 创建快捷方式 | PowerShell 启动脚本 + `.lnk` 快捷方式 | `.command`（macOS）/ `.desktop`（Linux） |
+| 3. 安装插件 | 缺 pnpm 时自动安装，然后 `dsh plugin --profile web add <包名>` | 相同 |
+| 4. 生成图标 | 官方 DeepSeek Logo（.ico，离线时自动回退自绘图标） | 复制 SVG 图标 |
+| 5. 创建快捷方式 | PowerShell 启动脚本 + `.lnk` 快捷方式 | `.command`（macOS）/ `.desktop`（Linux） |
+
+## 内置插件
+
+安装器默认安装 [dsh-web-plugin-manager](https://www.npmjs.com/package/dsh-web-plugin-manager)，它会在 Web UI 里提供插件市场 —— 浏览、安装、启用/禁用、卸载插件全部图形化操作，无需命令行。
+
+**自定义要安装的插件：**
+
+```powershell
+# Windows — 自定义插件集
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -Plugins "dsh-web-plugin-manager","dsh-better-sidebar"
+
+# Windows — 只装核心，不装插件
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -NoPlugins
+```
+
+```bash
+# macOS / Linux — 自定义插件集
+PLUGINS="dsh-web-plugin-manager dsh-better-sidebar" ./scripts/install.sh
+
+# macOS / Linux — 只装核心，不装插件
+PLUGINS="" ./scripts/install.sh
+```
+
+**随时安装更多插件：**
+
+```bash
+dsh plugin --profile web add <包名>
+```
+
+热门社区插件（更多可在 [npm](https://www.npmjs.com/search?q=dsh) 搜索）：
+
+| 插件 | 说明 |
+|------|------|
+| `dsh-web-plugin-manager` | Web UI 内的插件市场 |
+| `dsh-better-sidebar` | VSCode 风格侧边栏（资源管理器 / 终端 / Git / 浏览器） |
+| `dsh-pocket` | 手机访问电脑上的 DSH（局域网 + 公网） |
+| `@linxin666/dsh-pet` | 会响应模型活动的浮动桌宠 |
+
+> 说明：安装插件需要 `pnpm`，安装器会在缺失时自动安装。插件在下次 `dsh web` 启动时加载。
 
 ## 使用快捷方式
 
