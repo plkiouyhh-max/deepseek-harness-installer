@@ -1,16 +1,16 @@
 ---
-name: "deepseek-harness-installer"
+name: "dsh-deepseek-harness-installer"
 description: "Installs DeepSeek Harness (dsh) and creates a one-click desktop shortcut with a custom whale icon. Invoke when user wants to install, set up, or create a shortcut for DeepSeek Harness."
 ---
 
 # DeepSeek Harness Installer
 
-Automates the installation of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`) and creates a one-click desktop shortcut with a custom icon.
+Automates the installation of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`) and creates a one-click desktop shortcut with the official DeepSeek logo.
 
 ## What This Skill Does
 
 1. Installs the `@deepseek-ai/dsh` npm package globally
-2. Generates a custom whale-themed icon (DeepSeek brand style)
+2. Uses the official DeepSeek logo as the icon (falls back to a generated icon offline)
 3. Creates a desktop shortcut that starts `dsh web` and opens the browser automatically
 
 ## Prerequisites
@@ -80,7 +80,7 @@ After installation, inform the user:
 - DeepSeek Harness is in **developer preview** (0.1.0-rc.x). Breaking changes may occur.
 - The `dsh web` process must be running for the Web UI to be accessible. The shortcut handles this automatically.
 - If port 3080 is already in use, the shortcut will detect the running service and just open the browser.
-- The icon is generated programmatically (no external image downloads needed).
+- The icon is the official DeepSeek logo (downloaded at install time); if the download fails, a fallback icon is generated programmatically.
 
 ## Troubleshooting
 

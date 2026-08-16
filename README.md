@@ -6,14 +6,14 @@ One-click installer for [DeepSeek Harness](https://github.com/deepseek-ai/deepse
 
 This tool automatically:
 - Installs the `@deepseek-ai/dsh` npm package globally
-- Generates a custom whale-themed desktop icon
+- Uses the official DeepSeek logo as the desktop icon (offline fallback: generated icon)
 - Creates a one-click desktop shortcut that starts the service and opens the browser
 
 ## Preview
 
-The shortcut icon features a white whale (DeepSeek's brand mascot) on a blue gradient background:
+The shortcut uses the official DeepSeek logo:
 
-![dsh-icon](assets/dsh-icon.svg)
+![deepseek-official-icon](assets/deepseek-official.png)
 
 ## Prerequisites
 
@@ -24,8 +24,8 @@ The shortcut icon features a white whale (DeepSeek's brand mascot) on a blue gra
 ### Windows
 
 ```powershell
-git clone https://github.com/plkiouyhh-max/deepseek-harness-installer.git
-cd deepseek-harness-installer
+git clone https://github.com/plkiouyhh-max/dsh-deepseek-harness-installer.git
+cd dsh-deepseek-harness-installer
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
 
@@ -57,8 +57,8 @@ powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -DesktopPath "D:\De
 ### macOS / Linux
 
 ```bash
-git clone https://github.com/plkiouyhh-max/deepseek-harness-installer.git
-cd deepseek-harness-installer
+git clone https://github.com/plkiouyhh-max/dsh-deepseek-harness-installer.git
+cd dsh-deepseek-harness-installer
 chmod +x scripts/install.sh
 ./scripts/install.sh
 ```
@@ -90,13 +90,14 @@ chmod +x scripts/install.sh
 ## Project Structure
 
 ```
-deepseek-harness-installer/
+dsh-deepseek-harness-installer/
 ├── README.md              # English documentation
 ├── README.zh.md           # Chinese documentation
 ├── SKILL.md               # AI agent skill definition
 ├── LICENSE                # MIT license
 ├── assets/
-│   └── dsh-icon.svg       # Icon source (SVG)
+│   ├── deepseek-official.png  # Official DeepSeek logo (used on Windows)
+│   └── dsh-icon.svg           # Icon source (SVG, macOS/Linux)
 └── scripts/
     ├── install.ps1        # Windows installer
     └── install.sh         # macOS / Linux installer
@@ -111,8 +112,8 @@ This project includes a `SKILL.md` file with structured instructions that any AI
 Copy `SKILL.md` to `.trae/skills/`:
 
 ```bash
-mkdir -p .trae/skills/deepseek-harness-installer
-cp SKILL.md .trae/skills/deepseek-harness-installer/
+mkdir -p .trae/skills/dsh-deepseek-harness-installer
+cp SKILL.md .trae/skills/dsh-deepseek-harness-installer/
 ```
 
 Then ask: *"Install DeepSeek Harness and create a desktop shortcut."*
@@ -120,7 +121,7 @@ Then ask: *"Install DeepSeek Harness and create a desktop shortcut."*
 ### Claude Code
 
 ```bash
-claude "Read SKILL.md from https://github.com/plkiouyhh-max/deepseek-harness-installer and execute the installation"
+claude "Read SKILL.md from https://github.com/plkiouyhh-max/dsh-deepseek-harness-installer and execute the installation"
 ```
 
 Or save `SKILL.md` as `CLAUDE.md` in your project root and ask Claude Code to execute it.
@@ -130,7 +131,7 @@ Or save `SKILL.md` as `CLAUDE.md` in your project root and ask Claude Code to ex
 Add the `SKILL.md` content to `.cursorrules` in your project:
 
 ```bash
-curl -o .cursorrules https://raw.githubusercontent.com/plkiouyhh-max/deepseek-harness-installer/main/SKILL.md
+curl -o .cursorrules https://raw.githubusercontent.com/plkiouyhh-max/dsh-deepseek-harness-installer/main/SKILL.md
 ```
 
 Then open Cursor chat and ask: *"Follow the instructions to install DeepSeek Harness."*
@@ -152,7 +153,7 @@ In VS Code with Copilot Chat, type:
 Create a new task in Cline with the prompt:
 
 ```
-Read and execute the instructions from https://github.com/plkiouyhh-max/deepseek-harness-installer/blob/main/SKILL.md
+Read and execute the instructions from https://github.com/plkiouyhh-max/dsh-deepseek-harness-installer/blob/main/SKILL.md
 ```
 
 ### Continue.dev
@@ -170,12 +171,12 @@ aider --message "Read SKILL.md and run the DeepSeek Harness installation"
 Create a new task with:
 
 ```
-Clone https://github.com/plkiouyhh-max/deepseek-harness-installer and run the installation script for my OS.
+Clone https://github.com/plkiouyhh-max/dsh-deepseek-harness-installer and run the installation script for my OS.
 ```
 
 ### Any Other Agent
 
-The `SKILL.md` contains universal, step-by-step instructions. Simply point your agent to [this repository](https://github.com/plkiouyhh-max/deepseek-harness-installer) and ask it to follow the installation guide.
+The `SKILL.md` contains universal, step-by-step instructions. Simply point your agent to [this repository](https://github.com/plkiouyhh-max/dsh-deepseek-harness-installer) and ask it to follow the installation guide.
 
 ## Manual Installation (No Script)
 

@@ -6,14 +6,14 @@
 
 本工具自动完成：
 - 全局安装 `@deepseek-ai/dsh` npm 包
-- 生成自定义鲸鱼主题桌面图标
+- 使用 DeepSeek 官方 Logo 作为桌面图标（离线时回退自绘图标）
 - 创建一键快捷方式，点击即启动服务并打开浏览器
 
 ## 图标预览
 
-快捷方式图标为蓝色渐变背景上的白色鲸鱼（DeepSeek 品牌标志）：
+快捷方式使用 DeepSeek 官方 Logo：
 
-![dsh-icon](assets/dsh-icon.svg)
+![deepseek-official-icon](assets/deepseek-official.png)
 
 ## 前置要求
 
@@ -24,8 +24,8 @@
 ### Windows
 
 ```powershell
-git clone https://github.com/plkiouyhh-max/deepseek-harness-installer.git
-cd deepseek-harness-installer
+git clone https://github.com/plkiouyhh-max/dsh-deepseek-harness-installer.git
+cd dsh-deepseek-harness-installer
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
 
@@ -57,8 +57,8 @@ powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -DesktopPath "D:\�
 ### macOS / Linux
 
 ```bash
-git clone https://github.com/plkiouyhh-max/deepseek-harness-installer.git
-cd deepseek-harness-installer
+git clone https://github.com/plkiouyhh-max/dsh-deepseek-harness-installer.git
+cd dsh-deepseek-harness-installer
 chmod +x scripts/install.sh
 ./scripts/install.sh
 ```
@@ -90,13 +90,14 @@ chmod +x scripts/install.sh
 ## 项目结构
 
 ```
-deepseek-harness-installer/
+dsh-deepseek-harness-installer/
 ├── README.md              # 英文文档
 ├── README.zh.md           # 中文文档
 ├── SKILL.md               # AI Agent 技能定义
 ├── LICENSE                # MIT 许可证
 ├── assets/
-│   └── dsh-icon.svg       # 图标源文件（SVG）
+│   ├── deepseek-official.png  # DeepSeek 官方 Logo（Windows 使用）
+│   └── dsh-icon.svg           # 图标源文件（SVG，macOS/Linux 使用）
 └── scripts/
     ├── install.ps1        # Windows 安装脚本
     └── install.sh         # macOS / Linux 安装脚本
@@ -111,8 +112,8 @@ deepseek-harness-installer/
 将 `SKILL.md` 复制到 `.trae/skills/` 目录：
 
 ```bash
-mkdir -p .trae/skills/deepseek-harness-installer
-cp SKILL.md .trae/skills/deepseek-harness-installer/
+mkdir -p .trae/skills/dsh-deepseek-harness-installer
+cp SKILL.md .trae/skills/dsh-deepseek-harness-installer/
 ```
 
 然后对 Agent 说：*"安装 DeepSeek Harness 并创建桌面快捷方式"*
@@ -120,7 +121,7 @@ cp SKILL.md .trae/skills/deepseek-harness-installer/
 ### Claude Code
 
 ```bash
-claude "Read SKILL.md from https://github.com/plkiouyhh-max/deepseek-harness-installer and execute the installation"
+claude "Read SKILL.md from https://github.com/plkiouyhh-max/dsh-deepseek-harness-installer and execute the installation"
 ```
 
 或将 `SKILL.md` 保存为项目根目录的 `CLAUDE.md`，然后让 Claude Code 执行。
@@ -130,7 +131,7 @@ claude "Read SKILL.md from https://github.com/plkiouyhh-max/deepseek-harness-ins
 将 `SKILL.md` 内容添加到项目的 `.cursorrules` 文件：
 
 ```bash
-curl -o .cursorrules https://raw.githubusercontent.com/plkiouyhh-max/deepseek-harness-installer/main/SKILL.md
+curl -o .cursorrules https://raw.githubusercontent.com/plkiouyhh-max/dsh-deepseek-harness-installer/main/SKILL.md
 ```
 
 然后在 Cursor 对话框中输入：*"按照指令安装 DeepSeek Harness"*
@@ -152,7 +153,7 @@ curl -o .cursorrules https://raw.githubusercontent.com/plkiouyhh-max/deepseek-ha
 在 Cline 中创建新任务，输入：
 
 ```
-Read and execute the instructions from https://github.com/plkiouyhh-max/deepseek-harness-installer/blob/main/SKILL.md
+Read and execute the instructions from https://github.com/plkiouyhh-max/dsh-deepseek-harness-installer/blob/main/SKILL.md
 ```
 
 ### Continue.dev
@@ -170,12 +171,12 @@ aider --message "Read SKILL.md and run the DeepSeek Harness installation"
 创建新任务，输入：
 
 ```
-Clone https://github.com/plkiouyhh-max/deepseek-harness-installer and run the installation script for my OS.
+Clone https://github.com/plkiouyhh-max/dsh-deepseek-harness-installer and run the installation script for my OS.
 ```
 
 ### 其他 Agent
 
-`SKILL.md` 包含通用的分步指令。只需将你的 Agent 指向[本仓库](https://github.com/plkiouyhh-max/deepseek-harness-installer)，让它按照指南执行安装即可。
+`SKILL.md` 包含通用的分步指令。只需将你的 Agent 指向[本仓库](https://github.com/plkiouyhh-max/dsh-deepseek-harness-installer)，让它按照指南执行安装即可。
 
 ## 手动安装（不使用脚本）
 
