@@ -9,7 +9,9 @@
 .PARAMETER Plugins
     Space-separated list of dsh plugin packages to install.
     Defaults to 'dshmarket' (the awesome-dsh-plugin catalog inside the Web UI),
-    'dsh-better-sidebar' and 'dsh-usage-stats'.
+    'dsh-better-sidebar', 'dsh-usage-stats' and '@deepseek-ai/dsh-persona'
+    (the persona engine that injects the minimal/standard presets' system
+    prompt; the web profile does not bundle it by default).
 .PARAMETER NoPlugins
     Skip plugin installation entirely.
 .EXAMPLE
@@ -20,7 +22,7 @@
 
 param(
     [string]$DesktopPath = "",
-    [string[]]$Plugins = @("dshmarket", "dsh-better-sidebar", "dsh-usage-stats"),
+    [string[]]$Plugins = @("dshmarket", "dsh-better-sidebar", "dsh-usage-stats", "@deepseek-ai/dsh-persona"),
     [switch]$NoPlugins
 )
 

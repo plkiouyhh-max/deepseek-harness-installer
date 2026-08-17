@@ -10,7 +10,7 @@ Automates the installation of [DeepSeek Harness](https://github.com/deepseek-ai/
 ## What This Skill Does
 
 1. Installs the `@deepseek-ai/dsh` npm package globally
-2. Installs plugins into the `web` profile (defaults: `dshmarket` - the awesome-dsh-plugin catalog of 341 community plugins inside the Web UI - plus `dsh-better-sidebar` and `dsh-usage-stats`); installs `pnpm` automatically if missing
+2. Installs plugins into the `web` profile (defaults: `dshmarket` - the awesome-dsh-plugin catalog of 341 community plugins inside the Web UI - plus `dsh-better-sidebar`, `dsh-usage-stats` and `@deepseek-ai/dsh-persona`, the persona engine that injects the presets' system prompts); installs `pnpm` automatically if missing
 3. Verifies the minimal-mode system prompt contains `You are a helpful software engineer assistant.` and rewrites it if missing (community-dubbed "strongest form" prompt; no effectiveness claim - see README)
 4. Uses the official DeepSeek logo as the icon (falls back to a generated icon offline)
 5. Creates a desktop shortcut that starts `dsh web` and opens the browser automatically
@@ -34,7 +34,7 @@ Detect the OS to choose the correct script:
 #### Windows (PowerShell)
 
 ```powershell
-# Default (installs dshmarket + dsh-better-sidebar + dsh-usage-stats)
+# Default (installs dshmarket + dsh-better-sidebar + dsh-usage-stats + @deepseek-ai/dsh-persona)
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 
 # Custom plugin set
@@ -58,7 +58,7 @@ The script will:
 ```bash
 chmod +x scripts/install.sh
 
-# Default (installs dshmarket + dsh-better-sidebar + dsh-usage-stats)
+# Default (installs dshmarket + dsh-better-sidebar + dsh-usage-stats + @deepseek-ai/dsh-persona)
 ./scripts/install.sh
 
 # Custom plugin set

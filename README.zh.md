@@ -6,7 +6,7 @@
 
 本工具自动完成：
 - 全局安装 `@deepseek-ai/dsh` npm 包
-- 安装插件（默认装 `dshmarket` -- 把 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 全部 341 个社区插件目录装进 Web UI，可浏览/搜索/一键安装；另附 `dsh-better-sidebar` 侧边栏与 `dsh-usage-stats` 用量看板）
+- 安装插件（默认装 `dshmarket` -- 把 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 全部 341 个社区插件目录装进 Web UI，可浏览/搜索/一键安装；另附 `dsh-better-sidebar` 侧边栏、`dsh-usage-stats` 用量看板与 `@deepseek-ai/dsh-persona` 预设提示词引擎）
 - 校验极简模式（minimal）系统提示词包含 `You are a helpful software engineer assistant.`，缺失时自动回写（见[下方「极简模式与『最强形态』提示词」](#极简模式与最强形态提示词)）
 - 使用 DeepSeek 官方 Logo 作为桌面图标（离线时回退自绘图标）
 - 创建一键快捷方式，点击即启动服务并打开浏览器
@@ -78,13 +78,14 @@ chmod +x scripts/install.sh
 
 ## 内置插件
 
-安装器默认安装三个插件：
+安装器默认安装四个插件：
 
 | 插件 | 说明 |
 |------|------|
-| `dshmarket` | [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 官方配套市场：把全部 341 个社区插件目录装进 Web UI，浏览、搜索、看 star、一键安装/更新/卸载，多数插件免重启生效 |
+| `dshmarket` | [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 官方配套市场：把全部 341 个社区插件目录装进 Web UI，浏览、搜索、看 star、一键安装/更新/卸载，多数插件免重启生效。目录数据直连 `awesome-dsh-plugin.com`（国内可直连），失败自动回退包内快照，无需代理 |
 | `dsh-better-sidebar` | VSCode 风格侧边栏（资源管理器 / 终端 / Git / 浏览器） |
 | `dsh-usage-stats` | GitHub 风格用量热力图看板：按工作区统计使用次数与 Token 花费（含缓存命中率）、DeepSeek 账户余额查询 |
+| `@deepseek-ai/dsh-persona` | 预设提示词引擎：极简/标准模式的系统提示词（含极简模式那行 `You are a helpful software engineer assistant.`）由它注入。**Web profile 默认不带**，缺了它极简模式就没有系统提示词 |
 
 > 旧默认市场 `dsh-web-plugin-manager`（只管理已装插件）仍可手动安装：`dsh plugin --profile web add dsh-web-plugin-manager`
 
@@ -131,7 +132,9 @@ DSH 内置「极简模式」（minimal 预设）：仅提供持久 bash 与 `str
 You are a helpful software engineer assistant.
 ```
 
-安装器每次运行都会校验这行提示词仍然存在（上游 dsh 更新导致缺失时会自动回写），确保你**每次打开极简模式，发给模型的第一行字都是这句**。
+安装器每次运行都会校验这行提示词仍然存在（上游 dsh 更新导致缺失时会自动回写），并随装 `@deepseek-ai/dsh-persona` 注入引擎（Web profile 默认不带），确保你**每次打开极简模式，发给模型的第一行字都是这句**。
+
+> 注意：这行是随请求发送给模型的**系统提示词**，不会以聊天消息的形式显示在会话界面上。
 
 **网传「最强形态」**：社区流传（Reddit r/DeepSeek、X 及韩文社区等地的实测帖）DeepSeek 4 Pro 可能对 DSH 极简模式这类环境过拟合，`极简模式 + Thinking Max` 组合在连续编码任务中表现最佳；无法使用 DSH 极简模式的场景（如普通聊天客户端），也可以把这句贴在自定义提示词的最前面来近似模拟。
 

@@ -6,7 +6,7 @@ One-click installer for [DeepSeek Harness](https://github.com/deepseek-ai/deepse
 
 This tool automatically:
 - Installs the `@deepseek-ai/dsh` npm package globally
-- Installs plugins (defaults to `dshmarket` - the [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) catalog of 341 community plugins inside the Web UI - plus `dsh-better-sidebar` and `dsh-usage-stats`)
+- Installs plugins (defaults to `dshmarket` - the [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) catalog of 341 community plugins inside the Web UI - plus `dsh-better-sidebar`, `dsh-usage-stats` and `@deepseek-ai/dsh-persona`, the persona engine behind the presets' system prompts)
 - Verifies the minimal-mode system prompt contains `You are a helpful software engineer assistant.` and rewrites it if missing (see ["Minimal mode & the 'strongest form' prompt"](#minimal-mode--the-strongest-form-prompt))
 - Uses the official DeepSeek logo as the desktop icon (offline fallback: generated icon)
 - Creates a one-click desktop shortcut that starts the service and opens the browser
@@ -78,13 +78,14 @@ chmod +x scripts/install.sh
 
 ## Bundled Plugins
 
-By default the installer adds three plugins:
+By default the installer adds four plugins:
 
 | Plugin | Description |
 |--------|-------------|
-| `dshmarket` | The official companion market for [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin): browse, search, check stars and one-click install/update/uninstall all 341 community plugins from inside the Web UI - most take effect without a restart |
+| `dshmarket` | The official companion market for [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin): browse, search, check stars and one-click install/update/uninstall all 341 community plugins from inside the Web UI - most take effect without a restart. Catalog is fetched directly from `awesome-dsh-plugin.com` (reachable from mainland China without a proxy) and falls back to the bundled snapshot when offline |
 | `dsh-better-sidebar` | VSCode-like sidebar (explorer / terminal / git / browser) |
 | `dsh-usage-stats` | GitHub-style usage heatmap: per-workspace counts, token spend (with cache hit rate) and DeepSeek balance lookup |
+| `@deepseek-ai/dsh-persona` | The persona engine that injects the presets' system prompts - including the minimal-mode line `You are a helpful software engineer assistant.`. **The web profile does not bundle it**; without it minimal mode sends no system prompt at all |
 
 > The previous default marketplace `dsh-web-plugin-manager` (manages installed plugins only) can still be installed manually: `dsh plugin --profile web add dsh-web-plugin-manager`
 
@@ -131,7 +132,9 @@ DSH ships a built-in "minimal mode" (the `minimal` agent preset): a coding agent
 You are a helpful software engineer assistant.
 ```
 
-The installer verifies on every run that this line is still present (and rewrites it if an upstream dsh update drops it), so **every time you open minimal mode, this is the first line sent to the model**.
+The installer verifies on every run that this line is still present (and rewrites it if an upstream dsh update drops it), and installs `@deepseek-ai/dsh-persona` (not bundled with the web profile by default), so **every time you open minimal mode, this is the first line sent to the model**.
+
+> Note: the line is a **system prompt** sent with each request - it does not show up as a chat message in the UI.
 
 **The community-dubbed "strongest form"**: community posts (Reddit r/DeepSeek, X, Korean forums, etc.) speculate that DeepSeek 4 Pro may be overfitted to DSH-minimal-mode-like environments, and that `minimal mode + Thinking Max` performs best on continuous coding tasks. If you cannot use DSH minimal mode (e.g. a plain chat client), pasting this line at the very top of your custom prompt is said to approximate it.
 

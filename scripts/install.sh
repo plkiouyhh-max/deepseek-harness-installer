@@ -6,7 +6,7 @@
 # and creates a .desktop entry (Linux) or .command script (macOS).
 #
 # Usage:
-#   ./install.sh                                  # default: dshmarket + dsh-better-sidebar + dsh-usage-stats
+#   ./install.sh                                  # default: dshmarket + dsh-better-sidebar + dsh-usage-stats + @deepseek-ai/dsh-persona
 #   PLUGINS="a b" ./install.sh                    # custom plugin list (space-separated)
 #   PLUGINS="" ./install.sh                       # skip plugins
 #
@@ -14,7 +14,7 @@
 set -e
 
 # Plugin list (override with PLUGINS env var; empty string disables)
-DEFAULT_PLUGINS="dshmarket dsh-better-sidebar dsh-usage-stats"
+DEFAULT_PLUGINS="dshmarket dsh-better-sidebar dsh-usage-stats @deepseek-ai/dsh-persona"
 PLUGINS="${PLUGINS-${DEFAULT_PLUGINS}}"
 
 echo ""
