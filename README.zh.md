@@ -6,8 +6,8 @@
 
 本工具自动完成：
 - 全局安装 `@deepseek-ai/dsh` npm 包
-- 安装插件（默认装 `dshmarket` -- 把 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 全部 341 个社区插件目录装进 Web UI，可浏览/搜索/一键安装；另附 `dsh-better-sidebar` 侧边栏、`dsh-usage-stats` 用量看板与 `@deepseek-ai/dsh-persona` 预设提示词引擎）
-- 校验极简模式（minimal）系统提示词包含 `You are a helpful software engineer assistant.`，缺失时自动回写（见[下方「极简模式与『最强形态』提示词」](#极简模式与最强形态提示词)）
+- 安装插件（默认装 `dshmarket` -- 把 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 全部 341 个社区插件目录装进 Web UI，可浏览/搜索/一键安装；另附 `dsh-better-sidebar` 侧边栏、`dsh-usage-stats` 用量看板、`@deepseek-ai/dsh-persona` 预设提示词引擎与 `dsh-minimal-banner` 可见横幅）
+- 校验极简模式（minimal）系统提示词包含 `You are a helpful software engineer assistant.`，缺失时自动回写，并把该行同时注入为**会话顶部可见的上下文消息**（见[下方「极简模式与『最强形态』提示词」](#极简模式与最强形态提示词)）
 - 使用 DeepSeek 官方 Logo 作为桌面图标（离线时回退自绘图标）
 - 创建一键快捷方式，点击即启动服务并打开浏览器
 
@@ -72,7 +72,7 @@ chmod +x scripts/install.sh
 | 1. 检查 Node.js | `node --version` | `node --version` |
 | 2. 安装 dsh | `npm install -g @deepseek-ai/dsh` | `sudo npm install -g @deepseek-ai/dsh` |
 | 3. 校验极简模式提示词 | 检查/回写 minimal 预设的 persona 行 | 相同 |
-| 4. 安装插件 | 缺 pnpm 时自动安装，然后 `dsh plugin --profile web add <包名>` | 相同 |
+| 4. 安装插件 | 缺 pnpm 时自动安装；为本地横幅插件准备依赖；然后 `dsh plugin --profile web add <包名>` | 相同 |
 | 5. 生成图标 | 官方 DeepSeek Logo（.ico，离线时自动回退自绘图标） | 复制 SVG 图标 |
 | 6. 创建快捷方式 | PowerShell 启动脚本 + `.lnk` 快捷方式 | `.command`（macOS）/ `.desktop`（Linux） |
 
@@ -86,6 +86,7 @@ chmod +x scripts/install.sh
 | `dsh-better-sidebar` | VSCode 风格侧边栏（资源管理器 / 终端 / Git / 浏览器） |
 | `dsh-usage-stats` | GitHub 风格用量热力图看板：按工作区统计使用次数与 Token 花费（含缓存命中率）、DeepSeek 账户余额查询 |
 | `@deepseek-ai/dsh-persona` | 预设提示词引擎：极简/标准模式的系统提示词（含极简模式那行 `You are a helpful software engineer assistant.`）由它注入。**Web profile 默认不带**，缺了它极简模式就没有系统提示词 |
+| `dsh-minimal-banner`（本地插件） | 极简模式可见横幅：每个极简会话开头把这行提示词以**上下文消息**形式显示在会话顶部（系统提示词本体仍是不可见的），随安装器分发、自动挂入极简预设 |
 
 > 旧默认市场 `dsh-web-plugin-manager`（只管理已装插件）仍可手动安装：`dsh plugin --profile web add dsh-web-plugin-manager`
 
@@ -123,6 +124,8 @@ dsh plugin --profile web add <包名>
 | `@linxin666/dsh-pet` | 会响应模型活动的浮动桌宠 |
 
 > 说明：安装插件需要 `pnpm`，安装器会在缺失时自动安装。插件在下次 `dsh web` 启动时加载。
+>
+> pnpm 11 起默认拦截依赖的 postinstall 构建脚本（安全特性），会导致 `dsh plugin add` 报 `ERR_PNPM_IGNORED_BUILDS`。安装器检测到该错误时会自动放行 `node-pty`（dsh Web 终端的原生模块，等价于 `pnpm approve-builds node-pty`）并重试一次；也可自行在 `~/.dsh/profiles/web` 目录执行该命令放行。
 
 ## 极简模式与「最强形态」提示词
 
@@ -132,9 +135,9 @@ DSH 内置「极简模式」（minimal 预设）：仅提供持久 bash 与 `str
 You are a helpful software engineer assistant.
 ```
 
-安装器每次运行都会校验这行提示词仍然存在（上游 dsh 更新导致缺失时会自动回写），并随装 `@deepseek-ai/dsh-persona` 注入引擎（Web profile 默认不带），确保你**每次打开极简模式，发给模型的第一行字都是这句**。
+安装器每次运行都会校验这行提示词仍然存在（上游 dsh 更新导致缺失时会自动回写），随装 `@deepseek-ai/dsh-persona` 注入引擎（Web profile 默认不带），并把 `dsh-minimal-banner` 挂入极简预设--**每次打开极简模式，会话顶部都会出现这行字（以上下文消息形式显示）**。
 
-> 注意：这行是随请求发送给模型的**系统提示词**，不会以聊天消息的形式显示在会话界面上。
+> 说明：这行字有两条通道--① `dsh-persona` 注入的系统提示词（发给模型，界面不可见，这是「最强形态」的本体）；② `dsh-minimal-banner` 注入的可见上下文消息（会话顶部显示，也会随请求发给模型，仅多耗约 10 token）。不想要可见横幅时，用 `dsh plugin --profile web remove dsh-minimal-banner` 卸载即可，系统提示词不受影响。
 
 **网传「最强形态」**：社区流传（Reddit r/DeepSeek、X 及韩文社区等地的实测帖）DeepSeek 4 Pro 可能对 DSH 极简模式这类环境过拟合，`极简模式 + Thinking Max` 组合在连续编码任务中表现最佳；无法使用 DSH 极简模式的场景（如普通聊天客户端），也可以把这句贴在自定义提示词的最前面来近似模拟。
 

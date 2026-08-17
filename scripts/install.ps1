@@ -35,7 +35,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # === Step 1: Check Node.js ===
-Write-Host "[1/6] Checking Node.js..." -ForegroundColor Yellow
+Write-Host "[1/7] Checking Node.js..." -ForegroundColor Yellow
 try {
     $nodeVer = node --version 2>$null
     Write-Host "  Node.js $nodeVer found." -ForegroundColor Green
@@ -46,8 +46,12 @@ try {
 }
 
 # === Step 2: Install dsh ===
-Write-Host "[2/6] Installing @deepseek-ai/dsh globally..." -ForegroundColor Yellow
+Write-Host "[2/7] Installing @deepseek-ai/dsh globally..." -ForegroundColor Yellow
+# EAP=Continue around native calls: npm prints deprecation warnings to stderr,
+# which PowerShell 5.1 would otherwise turn into a terminating NativeCommandError.
+$ErrorActionPreference = "Continue"
 npm install -g @deepseek-ai/dsh 2>&1 | Out-Host
+$ErrorActionPreference = "Stop"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "  ERROR: Failed to install @deepseek-ai/dsh." -ForegroundColor Red
     exit 1
@@ -64,27 +68,47 @@ try {
     $npmRoot = (npm root -g | Out-String).Trim()
     $presetFile = Join-Path $npmRoot "@deepseek-ai\dsh\config\agent-presets\minimal\agent.cordis.yml"
     if (Test-Path $presetFile) {
-        if (Select-String -Path $presetFile -Pattern ([regex]::Escape("text: $MinimalLine")) -Quiet) {
+        # Scope the check to the persona entry's own `text:` line - other rows
+        # (e.g. the banner row) may carry the same sentence.
+        $lines = Get-Content $presetFile
+        $inPersona = $false
+        $personaTextIdx = -1
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match '^\s*-\s*id:\s*(\S+)\s*$') { $inPersona = ($Matches[1] -eq 'persona'); continue }
+            if ($inPersona -and $lines[$i] -match '^\s*text:\s*') { $personaTextIdx = $i; break }
+        }
+        if ($personaTextIdx -ge 0 -and $lines[$personaTextIdx] -match [regex]::Escape($MinimalLine)) {
             Write-Host "  OK: minimal mode persona already starts with the line." -ForegroundColor Green
+        } elseif ($personaTextIdx -ge 0) {
+            $lines[$personaTextIdx] = $lines[$personaTextIdx] -replace '(^\s*text:\s*).*$', ('$1' + $MinimalLine)
+            # UTF-8 without BOM, so YAML loaders never see a BOM
+            [System.IO.File]::WriteAllLines($presetFile, $lines, (New-Object System.Text.UTF8Encoding($false)))
+            Write-Host "  Patched: persona text reset to '$MinimalLine'" -ForegroundColor Green
         } else {
-            $lines = Get-Content $presetFile
-            $inPersona = $false
-            $patched = $false
+            Write-Host "  WARNING: could not locate the persona 'text:' entry; skipping." -ForegroundColor Yellow
+        }
+        # Ensure the visible banner row (dsh-minimal-banner) exists in the preset,
+        # so the persona line also shows up as a context message in the Web UI.
+        if (-not (Select-String -Path $presetFile -Pattern ([regex]::Escape("name: 'dsh-minimal-banner'")) -Quiet)) {
+            $lines = [System.Collections.Generic.List[string]](Get-Content $presetFile)
+            $personaIdx = -1
             for ($i = 0; $i -lt $lines.Count; $i++) {
-                if ($lines[$i] -match '^\s*-\s*id:\s*(\S+)\s*$') { $inPersona = ($Matches[1] -eq 'persona'); continue }
-                if ($inPersona -and $lines[$i] -match '^\s*text:\s*') {
-                    $lines[$i] = $lines[$i] -replace '(^\s*text:\s*).*$', ('$1' + $MinimalLine)
-                    # UTF-8 without BOM, so YAML loaders never see a BOM
-                    [System.IO.File]::WriteAllLines($presetFile, $lines, (New-Object System.Text.UTF8Encoding($false)))
-                    $patched = $true
-                    break
+                if ($lines[$i] -match '^- id: persona\s*$') { $personaIdx = $i; break }
+            }
+            if ($personaIdx -ge 0) {
+                $insertAt = $lines.Count
+                for ($i = $personaIdx + 1; $i -lt $lines.Count; $i++) {
+                    if ($lines[$i] -match '^- id:\s') { $insertAt = $i; break }
                 }
-            }
-            if ($patched) {
-                Write-Host "  Patched: persona text reset to '$MinimalLine'" -ForegroundColor Green
+                $banner = @('', '- id: minimal-banner', '  name: ''dsh-minimal-banner''', '  config:', "    text: $MinimalLine")
+                $lines.InsertRange($insertAt, [string[]]$banner)
+                [System.IO.File]::WriteAllLines($presetFile, $lines, (New-Object System.Text.UTF8Encoding($false)))
+                Write-Host "  Patched: visible banner row added to the minimal preset." -ForegroundColor Green
             } else {
-                Write-Host "  WARNING: could not locate the persona 'text:' entry; skipping." -ForegroundColor Yellow
+                Write-Host "  WARNING: persona entry not found; banner row not added." -ForegroundColor Yellow
             }
+        } else {
+            Write-Host "  OK: minimal preset already has the visible banner row." -ForegroundColor Green
         }
     } else {
         Write-Host "  WARNING: minimal preset not found (dsh layout may have changed): $presetFile" -ForegroundColor Yellow
@@ -97,6 +121,24 @@ try {
 if ($NoPlugins) {
     Write-Host "[4/7] Skipping plugins (-NoPlugins)." -ForegroundColor Yellow
 } else {
+    # Always append the bundled local banner plugin (shows the minimal-mode
+    # persona line as a visible context message) unless the user listed it.
+    $bannerPluginPath = Join-Path $PSScriptRoot "..\plugins\dsh-minimal-banner"
+    if (-not ($Plugins -match 'minimal-banner') -and (Test-Path (Join-Path $bannerPluginPath 'package.json'))) {
+        $Plugins = @($Plugins) + @($bannerPluginPath)
+    }
+    # The banner plugin is linked into the profile via `link:`; a linked
+    # package must carry its own node_modules (imports resolve from the link
+    # target, not from the profile), so materialize its dependency once.
+    if (($Plugins -match 'minimal-banner') -and -not (Test-Path (Join-Path $bannerPluginPath "node_modules\@deepseek-ai\schemastery"))) {
+        Write-Host "  Preparing dsh-minimal-banner dependencies..." -ForegroundColor Yellow
+        $ErrorActionPreference = "Continue"
+        npm install --prefix $bannerPluginPath --no-audit --no-fund 2>&1 | Out-Host
+        $ErrorActionPreference = "Stop"
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  WARNING: dependency setup for dsh-minimal-banner failed; the banner may not load." -ForegroundColor Yellow
+        }
+    }
     Write-Host "[4/7] Installing plugins: $($Plugins -join ', ')" -ForegroundColor Yellow
 
     # dsh plugin requires pnpm
@@ -104,7 +146,9 @@ if ($NoPlugins) {
     try { pnpm --version 2>$null | Out-Null; $pnpmOk = $true } catch {}
     if (-not $pnpmOk) {
         Write-Host "  Installing pnpm (required by 'dsh plugin')..." -ForegroundColor Yellow
+        $ErrorActionPreference = "Continue"
         npm install -g pnpm 2>&1 | Out-Host
+        $ErrorActionPreference = "Stop"
         if ($LASTEXITCODE -ne 0) {
             Write-Host "  ERROR: Failed to install pnpm. Plugin installation aborted." -ForegroundColor Red
             Write-Host "  Core installation continues; you can install plugins later with:" -ForegroundColor Yellow
@@ -114,10 +158,28 @@ if ($NoPlugins) {
 
     if ($pnpmOk -or $LASTEXITCODE -eq 0) {
         $failed = @()
+        $profileWebDir = Join-Path $env:USERPROFILE ".dsh\profiles\web"
+        $ErrorActionPreference = "Continue"
         foreach ($p in $Plugins) {
             dsh plugin --profile web add $p 2>&1 | Out-Host
+            if ($LASTEXITCODE -ne 0 -and (Test-Path (Join-Path $profileWebDir "package.json"))) {
+                # pnpm >= 11 hard-fails installs while dependency build scripts
+                # are blocked. The dsh web profile bundles node-pty (the web
+                # terminal's native module); allow-list it and retry the add.
+                # Equivalent to: pnpm approve-builds node-pty && pnpm install
+                $ws = Join-Path $profileWebDir "pnpm-workspace.yaml"
+                if (-not (Test-Path $ws) -or -not (Select-String -Path $ws -Pattern "node-pty" -Quiet)) {
+                    Write-Host "  Approving node-pty build (pnpm 11 blocks postinstall scripts by default)..." -ForegroundColor Yellow
+                    Push-Location $profileWebDir
+                    pnpm approve-builds node-pty 2>&1 | Out-Host
+                    pnpm install 2>&1 | Out-Host
+                    Pop-Location
+                    dsh plugin --profile web add $p 2>&1 | Out-Host
+                }
+            }
             if ($LASTEXITCODE -ne 0) { $failed += $p }
         }
+        $ErrorActionPreference = "Stop"
         if ($failed.Count -gt 0) {
             Write-Host "  WARNING: failed to install: $($failed -join ', ')" -ForegroundColor Yellow
             Write-Host "  You can retry later with: dsh plugin --profile web add <package>" -ForegroundColor Yellow
@@ -140,7 +202,7 @@ if (-not (Test-Path $DesktopPath)) {
 Write-Host "  Desktop: $DesktopPath" -ForegroundColor Green
 
 # === Step 5: Get official DeepSeek icon ===
-Write-Host "[5/6] Getting official DeepSeek icon..." -ForegroundColor Yellow
+Write-Host "[6/7] Getting official DeepSeek icon..." -ForegroundColor Yellow
 $icoPath = Join-Path $DesktopPath "dsh-official.ico"
 
 $downloaded = $false

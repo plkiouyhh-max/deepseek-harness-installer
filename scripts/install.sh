@@ -13,6 +13,8 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Plugin list (override with PLUGINS env var; empty string disables)
 DEFAULT_PLUGINS="dshmarket dsh-better-sidebar dsh-usage-stats @deepseek-ai/dsh-persona"
 PLUGINS="${PLUGINS-${DEFAULT_PLUGINS}}"
@@ -24,7 +26,7 @@ echo "========================================"
 echo ""
 
 # === Step 1: Check Node.js ===
-echo "[1/5] Checking Node.js..."
+echo "[1/6] Checking Node.js..."
 if command -v node &>/dev/null; then
     NODE_VER=$(node --version)
     echo "  Node.js $NODE_VER found."
@@ -35,7 +37,7 @@ else
 fi
 
 # === Step 2: Install dsh ===
-echo "[2/5] Installing @deepseek-ai/dsh globally..."
+echo "[2/6] Installing @deepseek-ai/dsh globally..."
 if npm install -g @deepseek-ai/dsh; then
     echo "  dsh installed successfully."
 else
@@ -53,7 +55,10 @@ MINIMAL_LINE="You are a helpful software engineer assistant."
 NPM_ROOT="$(npm root -g 2>/dev/null)"
 PRESET_FILE="$NPM_ROOT/@deepseek-ai/dsh/config/agent-presets/minimal/agent.cordis.yml"
 if [ -f "$PRESET_FILE" ]; then
-    if grep -qF "text: $MINIMAL_LINE" "$PRESET_FILE"; then
+    # Scope the check to the persona entry's own `text:` line - other rows
+    # (e.g. the banner row) may carry the same sentence.
+    PERSONA_TEXT="$(awk '/^- id: persona[[:space:]]*$/{inp=1} inp && /^[[:space:]]*text:/{print; exit}' "$PRESET_FILE" | sed 's/^[[:space:]]*//')"
+    if [ "$PERSONA_TEXT" = "text: $MINIMAL_LINE" ]; then
         echo "  OK: minimal mode persona already starts with the line."
     else
         TMP_FILE="$(mktemp)"
@@ -74,6 +79,37 @@ if [ -f "$PRESET_FILE" ]; then
         fi
         rm -f "$TMP_FILE"
     fi
+    # Ensure the visible banner row exists so the line also shows in the Web UI.
+    if grep -qF "name: 'dsh-minimal-banner'" "$PRESET_FILE"; then
+        echo "  OK: minimal preset already has the visible banner row."
+    else
+        TMP_FILE="$(mktemp)"
+        if awk -v b1="- id: minimal-banner" \
+                -v b2="  name: 'dsh-minimal-banner'" \
+                -v b3="  config:" \
+                -v b4="    text: $MINIMAL_LINE" '
+            BEGIN { inp = 0; done = 0 }
+            /^- id: persona[[:space:]]*$/ { inp = 1 }
+            inp && !done && /^- id:/ && $0 !~ /^- id: persona[[:space:]]*$/ {
+                print ""; print b1; print b2; print b3; print b4; done = 1
+            }
+            { print }
+            END {
+                if (inp && !done) { print ""; print b1; print b2; print b3; print b4; done = 1 }
+                exit (inp && done) ? 0 : 3
+            }
+        ' "$PRESET_FILE" > "$TMP_FILE"; then
+            if cp "$TMP_FILE" "$PRESET_FILE" 2>/dev/null \
+               || { command -v sudo >/dev/null 2>&1 && sudo cp "$TMP_FILE" "$PRESET_FILE"; }; then
+                echo "  Patched: visible banner row added to the minimal preset."
+            else
+                echo "  WARNING: no permission to patch the minimal preset; banner row missing."
+            fi
+        else
+            echo "  WARNING: persona entry not found; banner row not added."
+        fi
+        rm -f "$TMP_FILE"
+    fi
 else
     echo "  WARNING: minimal preset not found (dsh layout may have changed): $PRESET_FILE"
 fi
@@ -82,6 +118,26 @@ fi
 if [ -z "$PLUGINS" ]; then
     echo "[4/6] Skipping plugins (PLUGINS is empty)."
 else
+    # Always append the bundled local banner plugin (shows the minimal-mode
+    # persona line as a visible context message) unless already listed.
+    BANNER_PLUGIN="$SCRIPT_DIR/../plugins/dsh-minimal-banner"
+    case " $PLUGINS " in
+        *"minimal-banner"*) : ;;
+        *) [ -f "$BANNER_PLUGIN/package.json" ] && PLUGINS="$PLUGINS $BANNER_PLUGIN" ;;
+    esac
+    # The banner plugin is linked into the profile via `link:`; a linked
+    # package must carry its own node_modules (imports resolve from the link
+    # target, not from the profile), so materialize its dependency once.
+    case " $PLUGINS " in
+        *"minimal-banner"*)
+            if [ ! -d "$BANNER_PLUGIN/node_modules/@deepseek-ai/schemastery" ]; then
+                echo "  Preparing dsh-minimal-banner dependencies..."
+                if ! (cd "$BANNER_PLUGIN" && npm install --no-audit --no-fund); then
+                    echo "  WARNING: dependency setup for dsh-minimal-banner failed; the banner may not load."
+                fi
+            fi
+            ;;
+    esac
     echo "[4/6] Installing plugins: $PLUGINS"
 
     # Refresh command lookup so freshly installed binaries are found
@@ -100,9 +156,23 @@ else
 
     if $PNPM_OK; then
         FAILED=""
+        PROFILE_WEB="$HOME/.dsh/profiles/web"
         for p in $PLUGINS; do
             if dsh plugin --profile web add "$p"; then
                 echo "  Installed: $p"
+            elif [ -f "$PROFILE_WEB/package.json" ] \
+                 && ! grep -q "node-pty" "$PROFILE_WEB/pnpm-workspace.yaml" 2>/dev/null; then
+                # pnpm >= 11 hard-fails installs while dependency build scripts
+                # are blocked; node-pty (the web terminal's native module) needs
+                # an explicit allow-list. Approve it and retry the add once.
+                echo "  Approving node-pty build (pnpm 11 blocks postinstall scripts by default)..."
+                (cd "$PROFILE_WEB" && pnpm approve-builds node-pty && pnpm install) || true
+                if dsh plugin --profile web add "$p"; then
+                    echo "  Installed: $p (after node-pty build approval)"
+                else
+                    echo "  WARNING: failed to install $p (retry later with: dsh plugin --profile web add $p)"
+                    FAILED="$FAILED $p"
+                fi
             else
                 echo "  WARNING: failed to install $p (retry later with: dsh plugin --profile web add $p)"
                 FAILED="$FAILED $p"
@@ -115,7 +185,6 @@ fi
 # === Step 5: Determine platform and paths ===
 echo "[5/6] Setting up launcher..."
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ICON_SRC="$SCRIPT_DIR/../assets/dsh-icon.svg"
 PLATFORM=$(uname -s)
 

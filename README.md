@@ -6,8 +6,8 @@ One-click installer for [DeepSeek Harness](https://github.com/deepseek-ai/deepse
 
 This tool automatically:
 - Installs the `@deepseek-ai/dsh` npm package globally
-- Installs plugins (defaults to `dshmarket` - the [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) catalog of 341 community plugins inside the Web UI - plus `dsh-better-sidebar`, `dsh-usage-stats` and `@deepseek-ai/dsh-persona`, the persona engine behind the presets' system prompts)
-- Verifies the minimal-mode system prompt contains `You are a helpful software engineer assistant.` and rewrites it if missing (see ["Minimal mode & the 'strongest form' prompt"](#minimal-mode--the-strongest-form-prompt))
+- Installs plugins (defaults to `dshmarket` - the [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) catalog of 341 community plugins inside the Web UI - plus `dsh-better-sidebar`, `dsh-usage-stats`, `@deepseek-ai/dsh-persona` and the bundled local `dsh-minimal-banner`)
+- Verifies the minimal-mode system prompt contains `You are a helpful software engineer assistant.` and rewrites it if missing, and also surfaces that line as a **visible context message** at the top of every minimal-mode session (see ["Minimal mode & the 'strongest form' prompt"](#minimal-mode--the-strongest-form-prompt))
 - Uses the official DeepSeek logo as the desktop icon (offline fallback: generated icon)
 - Creates a one-click desktop shortcut that starts the service and opens the browser
 
@@ -72,7 +72,7 @@ chmod +x scripts/install.sh
 | 1. Check Node.js | `node --version` | `node --version` |
 | 2. Install dsh | `npm install -g @deepseek-ai/dsh` | `sudo npm install -g @deepseek-ai/dsh` |
 | 3. Verify minimal-mode prompt | Check/rewrite the minimal preset's persona line | Same |
-| 4. Install plugins | Installs pnpm if missing, then `dsh plugin --profile web add <pkg>` | Same |
+| 4. Install plugins | Installs pnpm if missing; prepares the local banner plugin's dependencies; then `dsh plugin --profile web add <pkg>` | Same |
 | 5. Generate icon | Official DeepSeek logo (.ico, with offline fallback) | Copy SVG icon |
 | 6. Create shortcut | PowerShell launcher + `.lnk` shortcut | `.command` (macOS) / `.desktop` (Linux) |
 
@@ -86,6 +86,7 @@ By default the installer adds four plugins:
 | `dsh-better-sidebar` | VSCode-like sidebar (explorer / terminal / git / browser) |
 | `dsh-usage-stats` | GitHub-style usage heatmap: per-workspace counts, token spend (with cache hit rate) and DeepSeek balance lookup |
 | `@deepseek-ai/dsh-persona` | The persona engine that injects the presets' system prompts - including the minimal-mode line `You are a helpful software engineer assistant.`. **The web profile does not bundle it**; without it minimal mode sends no system prompt at all |
+| `dsh-minimal-banner` (local plugin) | A visible banner for minimal mode: shows that same line as a **context message** at the top of every minimal-mode session (the system prompt itself stays invisible). Bundled with this installer and mounted into the minimal preset |
 
 > The previous default marketplace `dsh-web-plugin-manager` (manages installed plugins only) can still be installed manually: `dsh plugin --profile web add dsh-web-plugin-manager`
 
@@ -123,6 +124,8 @@ Popular community plugins (search [npm](https://www.npmjs.com/search?q=dsh) or b
 | `@linxin666/dsh-pet` | Floating desktop pet that reacts to model activity |
 
 > Note: plugin installation requires `pnpm`; the installer installs it automatically if missing. Plugins load the next time `dsh web` starts.
+>
+> Starting with pnpm 11, dependency postinstall build scripts are blocked by default (a security feature), which makes `dsh plugin add` fail with `ERR_PNPM_IGNORED_BUILDS`. When this happens the installer automatically allow-lists `node-pty` (the native module behind the dsh web terminal, equivalent to `pnpm approve-builds node-pty`) and retries once; you can also run that command yourself in `~/.dsh/profiles/web`.
 
 ## Minimal mode & the "strongest form" prompt
 
@@ -132,9 +135,9 @@ DSH ships a built-in "minimal mode" (the `minimal` agent preset): a coding agent
 You are a helpful software engineer assistant.
 ```
 
-The installer verifies on every run that this line is still present (and rewrites it if an upstream dsh update drops it), and installs `@deepseek-ai/dsh-persona` (not bundled with the web profile by default), so **every time you open minimal mode, this is the first line sent to the model**.
+The installer verifies on every run that this line is still present (and rewrites it if an upstream dsh update drops it), installs `@deepseek-ai/dsh-persona` (not bundled with the web profile by default), and mounts `dsh-minimal-banner` into the minimal preset - **every minimal-mode session opens with this line visible at the top (as a context message)**.
 
-> Note: the line is a **system prompt** sent with each request - it does not show up as a chat message in the UI.
+> The line travels over two channels: (1) the `dsh-persona` system prompt - sent to the model, invisible in the UI, and the essence of the "strongest form"; (2) the `dsh-minimal-banner` context message - shown at the top of the session and also sent to the model (~10 extra tokens). To drop the visible banner, `dsh plugin --profile web remove dsh-minimal-banner`; the system prompt is unaffected.
 
 **The community-dubbed "strongest form"**: community posts (Reddit r/DeepSeek, X, Korean forums, etc.) speculate that DeepSeek 4 Pro may be overfitted to DSH-minimal-mode-like environments, and that `minimal mode + Thinking Max` performs best on continuous coding tasks. If you cannot use DSH minimal mode (e.g. a plain chat client), pasting this line at the very top of your custom prompt is said to approximate it.
 

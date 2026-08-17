@@ -10,8 +10,8 @@ Automates the installation of [DeepSeek Harness](https://github.com/deepseek-ai/
 ## What This Skill Does
 
 1. Installs the `@deepseek-ai/dsh` npm package globally
-2. Installs plugins into the `web` profile (defaults: `dshmarket` - the awesome-dsh-plugin catalog of 341 community plugins inside the Web UI - plus `dsh-better-sidebar`, `dsh-usage-stats` and `@deepseek-ai/dsh-persona`, the persona engine that injects the presets' system prompts); installs `pnpm` automatically if missing
-3. Verifies the minimal-mode system prompt contains `You are a helpful software engineer assistant.` and rewrites it if missing (community-dubbed "strongest form" prompt; no effectiveness claim - see README)
+2. Installs plugins into the `web` profile (defaults: `dshmarket` - the awesome-dsh-plugin catalog of 341 community plugins inside the Web UI - plus `dsh-better-sidebar`, `dsh-usage-stats`, `@deepseek-ai/dsh-persona` and the bundled local `plugins/dsh-minimal-banner`); installs `pnpm` automatically if missing
+3. Verifies the minimal-mode system prompt contains `You are a helpful software engineer assistant.` and rewrites it if missing; ensures the minimal preset carries the `dsh-minimal-banner` row so that line is also visible as a context message in every minimal-mode session (community-dubbed "strongest form" prompt; no effectiveness claim - see README)
 4. Uses the official DeepSeek logo as the icon (falls back to a generated icon offline)
 5. Creates a desktop shortcut that starts `dsh web` and opens the browser automatically
 
@@ -48,7 +48,7 @@ The script will:
 1. Verify Node.js is installed
 2. Run `npm install -g @deepseek-ai/dsh`
 3. Verify the minimal preset persona line `You are a helpful software engineer assistant.` (rewrite if missing)
-4. Install pnpm if missing, then install each plugin via `dsh plugin --profile web add <package>` (skippable with `-NoPlugins`)
+4. Install pnpm if missing, prepare the bundled banner plugin's own `node_modules` (it is linked into the profile via `link:`, so it must be self-contained), then install each plugin via `dsh plugin --profile web add <package>` (skippable with `-NoPlugins`); on pnpm >= 11 an `ERR_PNPM_IGNORED_BUILDS` failure triggers an automatic `pnpm approve-builds node-pty` + retry
 5. Download the official DeepSeek logo as the `.ico` icon (falls back to a System.Drawing generated icon if offline)
 6. Create a robust PowerShell launcher (`dsh-start.ps1`) that starts `dsh web` (if not running), waits for port 3080, and opens the browser - with an error dialog if startup fails
 7. Create a `.lnk` desktop shortcut with the custom icon
@@ -72,7 +72,7 @@ The script will:
 1. Verify Node.js is installed
 2. Run `sudo npm install -g @deepseek-ai/dsh`
 3. Verify the minimal preset persona line `You are a helpful software engineer assistant.` (rewrite if missing)
-4. Install pnpm if missing, then install each plugin via `dsh plugin --profile web add <package>`
+4. Install pnpm if missing, prepare the bundled banner plugin's own `node_modules`, then install each plugin via `dsh plugin --profile web add <package>`; on pnpm >= 11 an `ERR_PNPM_IGNORED_BUILDS` failure triggers an automatic `pnpm approve-builds node-pty` + retry
 5. Create a `.desktop` entry with the SVG icon
 6. Add the launcher to the desktop
 

@@ -3,12 +3,14 @@
     Test for the minimal-mode prompt verify/rewrite logic in install.ps1.
 
 .DESCRIPTION
-    Runs three scenarios against the real global dsh minimal preset file
+    Runs four scenarios against the real global dsh minimal preset file
     (@deepseek-ai\dsh\config\agent-presets\minimal\agent.cordis.yml):
 
-      1. intact           -> installer reports "OK: minimal mode persona already starts with the line."
-      2. tampered         -> installer reports "Patched: persona text reset to ..."
-      3. text line gone   -> installer reports "WARNING: could not locate the persona 'text:' entry"
+      1. intact            -> installer reports "OK: minimal mode persona already starts with the line."
+                              (and adds/keeps the visible banner row)
+      2. tampered          -> installer reports "Patched: persona text reset to ..."
+      3. text line gone    -> installer reports "WARNING: could not locate the persona 'text:' entry"
+      4. banner row gone   -> installer reports "Patched: visible banner row added"
 
     Side-effect isolation:
       - npm is mocked via a PATH stub (npm.cmd): "npm install ..." succeeds
@@ -61,8 +63,38 @@ if (-not (Test-Path $preset)) { throw "minimal preset not found: $preset" }
 $original = [System.IO.File]::ReadAllText($preset, $Utf8NoBom)
 
 # --- helpers --------------------------------------------------------------------
+# Scoped check: only the `text:` line INSIDE the persona entry counts.
+# (The banner row carries the same sentence, so a whole-file search would
+#  produce false positives.)
 function Test-HasLine {
-    [bool](Select-String -Path $preset -Pattern ([regex]::Escape("text: $Line")) -Quiet)
+    $inPersona = $false
+    foreach ($l in (Get-Content $preset)) {
+        if ($l -match '^\s*-\s*id:\s*(\S+)\s*$') { $inPersona = ($Matches[1] -eq 'persona'); continue }
+        if ($inPersona -and $l -match '^\s*text:\s*') { return ($l -match [regex]::Escape($Line)) }
+    }
+    return $false
+}
+
+function Test-HasBannerRow {
+    [bool](Select-String -Path $preset -Pattern ([regex]::Escape("name: 'dsh-minimal-banner'")) -Quiet)
+}
+
+function Remove-BannerRow {
+    $lines = Get-Content $preset
+    $out   = New-Object System.Collections.Generic.List[string]
+    $skip  = $false
+    foreach ($l in $lines) {
+        if ($l -match '^- id: minimal-banner\s*$') {
+            if ($out.Count -gt 0 -and $out[$out.Count - 1] -eq '') { $out.RemoveAt($out.Count - 1) }
+            $skip = $true
+            continue
+        }
+        if ($skip) {
+            if ($l -match '^- id:\s') { $skip = $false } else { continue }
+        }
+        $out.Add($l)
+    }
+    [System.IO.File]::WriteAllLines($preset, $out, $Utf8NoBom)
 }
 
 function Set-PersonaText([string]$value) {
@@ -131,15 +163,16 @@ Write-Log ""
 $results = New-Object System.Collections.Generic.List[object]
 
 try {
-    # Scenario 1: intact preset
+    # Scenario 1: intact preset (persona OK; banner row added or kept)
     [System.IO.File]::WriteAllText($preset, $original, $Utf8NoBom)
     $out = Invoke-Installer
     Write-Log "--- [1] intact: relevant installer output ---"
-    Write-Log ((($out -split "`r?`n") | Where-Object { $_ -match 'minimal|persona|WARNING|Patched' }) -join "`n")
+    Write-Log ((($out -split "`r?`n") | Where-Object { $_ -match 'minimal|persona|banner|WARNING|Patched' }) -join "`n")
     $results.Add([pscustomobject]@{
         Scenario = '1 intact'
-        Expected = 'OK: persona already starts with the line'
-        Pass     = ($out -match 'OK: minimal mode persona already starts with the line') -and (Test-HasLine)
+        Expected = 'OK: persona line + visible banner row'
+        Pass     = ($out -match 'OK: minimal mode persona already starts with the line') `
+                   -and ($out -match 'visible banner row') -and (Test-HasLine) -and (Test-HasBannerRow)
     })
 
     # Scenario 2: tampered persona text
@@ -147,7 +180,7 @@ try {
     $out = Invoke-Installer
     Write-Log ""
     Write-Log "--- [2] tampered: relevant installer output ---"
-    Write-Log ((($out -split "`r?`n") | Where-Object { $_ -match 'minimal|persona|WARNING|Patched' }) -join "`n")
+    Write-Log ((($out -split "`r?`n") | Where-Object { $_ -match 'minimal|persona|banner|WARNING|Patched' }) -join "`n")
     $results.Add([pscustomobject]@{
         Scenario = '2 tampered'
         Expected = 'Patched: persona text reset'
@@ -159,11 +192,25 @@ try {
     $out = Invoke-Installer
     Write-Log ""
     Write-Log "--- [3] text-line removed: relevant installer output ---"
-    Write-Log ((($out -split "`r?`n") | Where-Object { $_ -match 'minimal|persona|WARNING|Patched' }) -join "`n")
+    Write-Log ((($out -split "`r?`n") | Where-Object { $_ -match 'minimal|persona|banner|WARNING|Patched' }) -join "`n")
     $results.Add([pscustomobject]@{
         Scenario = '3 text-line removed'
         Expected = 'WARNING: could not locate the persona entry'
         Pass     = ($out -match 'WARNING: could not locate the persona')
+    })
+
+    # Scenario 4: visible banner row deleted -> installer re-adds it
+    [System.IO.File]::WriteAllText($preset, $original, $Utf8NoBom)
+    Invoke-Installer | Out-Null                      # ensure the banner row exists
+    Remove-BannerRow
+    $out = Invoke-Installer
+    Write-Log ""
+    Write-Log "--- [4] banner-row removed: relevant installer output ---"
+    Write-Log ((($out -split "`r?`n") | Where-Object { $_ -match 'minimal|persona|banner|WARNING|Patched' }) -join "`n")
+    $results.Add([pscustomobject]@{
+        Scenario = '4 banner-row removed'
+        Expected = 'Patched: visible banner row added'
+        Pass     = ($out -match 'Patched: visible banner row added') -and (Test-HasBannerRow) -and (Test-HasLine)
     })
 }
 finally {

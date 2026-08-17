@@ -1,0 +1,22 @@
+{
+  "name": "dsh-minimal-banner",
+  "version": "0.1.0",
+  "description": "Show the minimal-mode persona line as a visible context message at the start of every minimal-mode session.",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh-plugin"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1"
+  }
+}
