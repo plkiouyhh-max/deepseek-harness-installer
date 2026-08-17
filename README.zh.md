@@ -6,7 +6,8 @@
 
 本工具自动完成：
 - 全局安装 `@deepseek-ai/dsh` npm 包
-- 安装插件（默认装 `dsh-web-plugin-manager` —— 在 Web UI 里直接管理/安装插件的插件市场）
+- 安装插件（默认装 `dshmarket` -- 把 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 全部 341 个社区插件目录装进 Web UI，可浏览/搜索/一键安装；另附 `dsh-better-sidebar` 侧边栏与 `dsh-usage-stats` 用量看板）
+- 校验极简模式（minimal）系统提示词包含 `You are a helpful software engineer assistant.`，缺失时自动回写（见[下方「极简模式与『最强形态』提示词」](#极简模式与最强形态提示词)）
 - 使用 DeepSeek 官方 Logo 作为桌面图标（离线时回退自绘图标）
 - 创建一键快捷方式，点击即启动服务并打开浏览器
 
@@ -70,29 +71,38 @@ chmod +x scripts/install.sh
 |------|---------|---------------|
 | 1. 检查 Node.js | `node --version` | `node --version` |
 | 2. 安装 dsh | `npm install -g @deepseek-ai/dsh` | `sudo npm install -g @deepseek-ai/dsh` |
-| 3. 安装插件 | 缺 pnpm 时自动安装，然后 `dsh plugin --profile web add <包名>` | 相同 |
-| 4. 生成图标 | 官方 DeepSeek Logo（.ico，离线时自动回退自绘图标） | 复制 SVG 图标 |
-| 5. 创建快捷方式 | PowerShell 启动脚本 + `.lnk` 快捷方式 | `.command`（macOS）/ `.desktop`（Linux） |
+| 3. 校验极简模式提示词 | 检查/回写 minimal 预设的 persona 行 | 相同 |
+| 4. 安装插件 | 缺 pnpm 时自动安装，然后 `dsh plugin --profile web add <包名>` | 相同 |
+| 5. 生成图标 | 官方 DeepSeek Logo（.ico，离线时自动回退自绘图标） | 复制 SVG 图标 |
+| 6. 创建快捷方式 | PowerShell 启动脚本 + `.lnk` 快捷方式 | `.command`（macOS）/ `.desktop`（Linux） |
 
 ## 内置插件
 
-安装器默认安装 [dsh-web-plugin-manager](https://www.npmjs.com/package/dsh-web-plugin-manager)，它会在 Web UI 里提供插件市场 —— 浏览、安装、启用/禁用、卸载插件全部图形化操作，无需命令行。
+安装器默认安装三个插件：
+
+| 插件 | 说明 |
+|------|------|
+| `dshmarket` | [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 官方配套市场：把全部 341 个社区插件目录装进 Web UI，浏览、搜索、看 star、一键安装/更新/卸载，多数插件免重启生效 |
+| `dsh-better-sidebar` | VSCode 风格侧边栏（资源管理器 / 终端 / Git / 浏览器） |
+| `dsh-usage-stats` | GitHub 风格用量热力图看板：按工作区统计使用次数与 Token 花费（含缓存命中率）、DeepSeek 账户余额查询 |
+
+> 旧默认市场 `dsh-web-plugin-manager`（只管理已装插件）仍可手动安装：`dsh plugin --profile web add dsh-web-plugin-manager`
 
 **自定义要安装的插件：**
 
 ```powershell
-# Windows — 自定义插件集
-powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -Plugins "dsh-web-plugin-manager","dsh-better-sidebar"
+# Windows - 自定义插件集
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -Plugins "dshmarket","dsh-better-sidebar"
 
-# Windows — 只装核心，不装插件
+# Windows - 只装核心，不装插件
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -NoPlugins
 ```
 
 ```bash
-# macOS / Linux — 自定义插件集
-PLUGINS="dsh-web-plugin-manager dsh-better-sidebar" ./scripts/install.sh
+# macOS / Linux - 自定义插件集
+PLUGINS="dshmarket dsh-better-sidebar" ./scripts/install.sh
 
-# macOS / Linux — 只装核心，不装插件
+# macOS / Linux - 只装核心，不装插件
 PLUGINS="" ./scripts/install.sh
 ```
 
@@ -102,16 +112,30 @@ PLUGINS="" ./scripts/install.sh
 dsh plugin --profile web add <包名>
 ```
 
-热门社区插件（更多可在 [npm](https://www.npmjs.com/search?q=dsh) 搜索）：
+热门社区插件（更多可在 [npm](https://www.npmjs.com/search?q=dsh) 搜索或 [awesome 列表](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/README.zh.md) 浏览）：
 
 | 插件 | 说明 |
 |------|------|
-| `dsh-web-plugin-manager` | Web UI 内的插件市场 |
+| `dshmarket` | Web UI 内的 awesome 插件市场（341 个目录） |
 | `dsh-better-sidebar` | VSCode 风格侧边栏（资源管理器 / 终端 / Git / 浏览器） |
 | `dsh-pocket` | 手机访问电脑上的 DSH（局域网 + 公网） |
 | `@linxin666/dsh-pet` | 会响应模型活动的浮动桌宠 |
 
 > 说明：安装插件需要 `pnpm`，安装器会在缺失时自动安装。插件在下次 `dsh web` 启动时加载。
+
+## 极简模式与「最强形态」提示词
+
+DSH 内置「极简模式」（minimal 预设）：仅提供持久 bash 与 `str_replace_editor` 双工具的编码 Agent，其**完整系统提示词只有一行**：
+
+```text
+You are a helpful software engineer assistant.
+```
+
+安装器每次运行都会校验这行提示词仍然存在（上游 dsh 更新导致缺失时会自动回写），确保你**每次打开极简模式，发给模型的第一行字都是这句**。
+
+**网传「最强形态」**：社区流传（Reddit r/DeepSeek、X 及韩文社区等地的实测帖）DeepSeek 4 Pro 可能对 DSH 极简模式这类环境过拟合，`极简模式 + Thinking Max` 组合在连续编码任务中表现最佳；无法使用 DSH 极简模式的场景（如普通聊天客户端），也可以把这句贴在自定义提示词的最前面来近似模拟。
+
+> ⚠️ **免责声明**：以上为网传经验与社区小样本测试结论，**并非 DeepSeek 官方说法**。实际效果因模型版本、任务类型、提示词其余部分而异，请务必自行测试验证后再决定是否采用。本安装器只负责保证该提示词行存在，**不对其效果做任何形式的保证**。
 
 ## 使用快捷方式
 
@@ -122,11 +146,12 @@ dsh plugin --profile web add <包名>
    - 等待服务就绪（每 2 秒检测一次）
    - 打开浏览器访问 `http://127.0.0.1:3080`
 3. 首次使用需配置模型：
-   - 进入 **Settings → Models**
+   - 进入 **Settings -> Models**
    - 输入你的 DeepSeek API Key
    - 保存
-4. 选择工作区目录
-5. 创建会话，开始使用！
+4. 选择会话预设（标准 / 代码 / 极简模式--见[「极简模式与『最强形态』提示词」](#极简模式与最强形态提示词)）
+5. 选择工作区目录
+6. 创建会话，开始使用！
 
 ## 项目结构
 

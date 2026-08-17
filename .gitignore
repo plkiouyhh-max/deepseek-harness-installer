@@ -10,3 +10,6 @@ npm-debug.log
 # Temporary
 *.tmp
 *.bak
+
+# Test artifacts
+*.log

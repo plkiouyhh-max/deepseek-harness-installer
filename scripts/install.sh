@@ -6,7 +6,7 @@
 # and creates a .desktop entry (Linux) or .command script (macOS).
 #
 # Usage:
-#   ./install.sh                                  # default: installs dsh-web-plugin-manager
+#   ./install.sh                                  # default: dshmarket + dsh-better-sidebar + dsh-usage-stats
 #   PLUGINS="a b" ./install.sh                    # custom plugin list (space-separated)
 #   PLUGINS="" ./install.sh                       # skip plugins
 #
@@ -14,7 +14,7 @@
 set -e
 
 # Plugin list (override with PLUGINS env var; empty string disables)
-DEFAULT_PLUGINS="dsh-web-plugin-manager"
+DEFAULT_PLUGINS="dshmarket dsh-better-sidebar dsh-usage-stats"
 PLUGINS="${PLUGINS-${DEFAULT_PLUGINS}}"
 
 echo ""
@@ -44,11 +44,45 @@ else
     echo "  dsh installed successfully."
 fi
 
-# === Step 3: Install plugins ===
-if [ -z "$PLUGINS" ]; then
-    echo "[3/5] Skipping plugins (PLUGINS is empty)."
+# === Step 3: Verify minimal-mode system prompt ===
+# The 'minimal' agent preset's complete persona is the single line
+# "You are a helpful software engineer assistant." - the community-dubbed
+# "strongest form" prompt. Verify it survives dsh updates; rewrite if missing.
+echo "[3/6] Verifying minimal-mode system prompt..."
+MINIMAL_LINE="You are a helpful software engineer assistant."
+NPM_ROOT="$(npm root -g 2>/dev/null)"
+PRESET_FILE="$NPM_ROOT/@deepseek-ai/dsh/config/agent-presets/minimal/agent.cordis.yml"
+if [ -f "$PRESET_FILE" ]; then
+    if grep -qF "text: $MINIMAL_LINE" "$PRESET_FILE"; then
+        echo "  OK: minimal mode persona already starts with the line."
+    else
+        TMP_FILE="$(mktemp)"
+        if awk -v newline="    text: $MINIMAL_LINE" '
+            /^- id:/ { inpersona = ($0 ~ /^- id:[[:space:]]*persona[[:space:]]*$/) }
+            inpersona && !done && /^[[:space:]]*text:/ { print newline; done = 1; next }
+            { print }
+            END { exit done ? 0 : 3 }
+        ' "$PRESET_FILE" > "$TMP_FILE"; then
+            if cp "$TMP_FILE" "$PRESET_FILE" 2>/dev/null \
+               || { command -v sudo >/dev/null 2>&1 && sudo cp "$TMP_FILE" "$PRESET_FILE"; }; then
+                echo "  Patched: persona text reset to '$MINIMAL_LINE'"
+            else
+                echo "  WARNING: no permission to patch the minimal preset; it may lack the line."
+            fi
+        else
+            echo "  WARNING: could not locate the persona 'text:' entry; skipping."
+        fi
+        rm -f "$TMP_FILE"
+    fi
 else
-    echo "[3/5] Installing plugins: $PLUGINS"
+    echo "  WARNING: minimal preset not found (dsh layout may have changed): $PRESET_FILE"
+fi
+
+# === Step 4: Install plugins ===
+if [ -z "$PLUGINS" ]; then
+    echo "[4/6] Skipping plugins (PLUGINS is empty)."
+else
+    echo "[4/6] Installing plugins: $PLUGINS"
 
     # Refresh command lookup so freshly installed binaries are found
     hash -r 2>/dev/null || true
@@ -78,8 +112,8 @@ else
     fi
 fi
 
-# === Step 4: Determine platform and paths ===
-echo "[4/5] Setting up launcher..."
+# === Step 5: Determine platform and paths ===
+echo "[5/6] Setting up launcher..."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ICON_SRC="$SCRIPT_DIR/../assets/dsh-icon.svg"
@@ -180,8 +214,8 @@ DESKTOP
         ;;
 esac
 
-# === Step 5: Done ===
-echo "[5/5] Done!"
+# === Step 6: Done ===
+echo "[6/6] Done!"
 echo ""
 echo "========================================"
 echo "  Installation Complete!"
@@ -195,6 +229,6 @@ echo ""
 echo "  First time? Configure your model:"
 echo "    Settings -> Models -> Enter API Key"
 echo ""
-echo "  Manage plugins from the Web UI (dsh-web-plugin-manager)"
+echo "  Manage plugins from the Web UI (dshmarket)"
 echo "  or via: dsh plugin --profile web add <package>"
 echo ""

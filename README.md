@@ -6,7 +6,8 @@ One-click installer for [DeepSeek Harness](https://github.com/deepseek-ai/deepse
 
 This tool automatically:
 - Installs the `@deepseek-ai/dsh` npm package globally
-- Installs plugins (defaults to `dsh-web-plugin-manager` — a plugin marketplace inside the Web UI)
+- Installs plugins (defaults to `dshmarket` - the [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) catalog of 341 community plugins inside the Web UI - plus `dsh-better-sidebar` and `dsh-usage-stats`)
+- Verifies the minimal-mode system prompt contains `You are a helpful software engineer assistant.` and rewrites it if missing (see ["Minimal mode & the 'strongest form' prompt"](#minimal-mode--the-strongest-form-prompt))
 - Uses the official DeepSeek logo as the desktop icon (offline fallback: generated icon)
 - Creates a one-click desktop shortcut that starts the service and opens the browser
 
@@ -70,27 +71,36 @@ chmod +x scripts/install.sh
 |------|---------|---------------|
 | 1. Check Node.js | `node --version` | `node --version` |
 | 2. Install dsh | `npm install -g @deepseek-ai/dsh` | `sudo npm install -g @deepseek-ai/dsh` |
-| 3. Install plugins | Installs pnpm if missing, then `dsh plugin --profile web add <pkg>` | Same |
-| 4. Generate icon | Official DeepSeek logo (.ico, with offline fallback) | Copy SVG icon |
-| 5. Create shortcut | PowerShell launcher + `.lnk` shortcut | `.command` (macOS) / `.desktop` (Linux) |
+| 3. Verify minimal-mode prompt | Check/rewrite the minimal preset's persona line | Same |
+| 4. Install plugins | Installs pnpm if missing, then `dsh plugin --profile web add <pkg>` | Same |
+| 5. Generate icon | Official DeepSeek logo (.ico, with offline fallback) | Copy SVG icon |
+| 6. Create shortcut | PowerShell launcher + `.lnk` shortcut | `.command` (macOS) / `.desktop` (Linux) |
 
 ## Bundled Plugins
 
-By default the installer adds [dsh-web-plugin-manager](https://www.npmjs.com/package/dsh-web-plugin-manager), which gives you a plugin marketplace inside the Web UI — browse, install, enable/disable and remove plugins without touching a terminal.
+By default the installer adds three plugins:
+
+| Plugin | Description |
+|--------|-------------|
+| `dshmarket` | The official companion market for [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin): browse, search, check stars and one-click install/update/uninstall all 341 community plugins from inside the Web UI - most take effect without a restart |
+| `dsh-better-sidebar` | VSCode-like sidebar (explorer / terminal / git / browser) |
+| `dsh-usage-stats` | GitHub-style usage heatmap: per-workspace counts, token spend (with cache hit rate) and DeepSeek balance lookup |
+
+> The previous default marketplace `dsh-web-plugin-manager` (manages installed plugins only) can still be installed manually: `dsh plugin --profile web add dsh-web-plugin-manager`
 
 **Customize which plugins get installed:**
 
 ```powershell
-# Windows — a custom set
-powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -Plugins "dsh-web-plugin-manager","dsh-better-sidebar"
+# Windows - a custom set
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -Plugins "dshmarket","dsh-better-sidebar"
 
-# Windows — core only, no plugins
+# Windows - core only, no plugins
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -NoPlugins
 ```
 
 ```bash
-# macOS / Linux — a custom set
-PLUGINS="dsh-web-plugin-manager dsh-better-sidebar" ./scripts/install.sh
+# macOS / Linux - a custom set
+PLUGINS="dshmarket dsh-better-sidebar" ./scripts/install.sh
 
 # macOS / Linux — core only, no plugins
 PLUGINS="" ./scripts/install.sh
@@ -102,16 +112,30 @@ PLUGINS="" ./scripts/install.sh
 dsh plugin --profile web add <package>
 ```
 
-Popular community plugins (search [npm](https://www.npmjs.com/search?q=dsh) for more):
+Popular community plugins (search [npm](https://www.npmjs.com/search?q=dsh) or browse the [awesome list](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) for more):
 
 | Plugin | Description |
 |--------|-------------|
-| `dsh-web-plugin-manager` | Plugin marketplace inside the Web UI |
+| `dshmarket` | The awesome plugin catalog inside the Web UI (341 entries) |
 | `dsh-better-sidebar` | VSCode-like sidebar (explorer / terminal / git / browser) |
 | `dsh-pocket` | Access your DSH from a phone (LAN + public network) |
 | `@linxin666/dsh-pet` | Floating desktop pet that reacts to model activity |
 
 > Note: plugin installation requires `pnpm`; the installer installs it automatically if missing. Plugins load the next time `dsh web` starts.
+
+## Minimal mode & the "strongest form" prompt
+
+DSH ships a built-in "minimal mode" (the `minimal` agent preset): a coding agent with only a persistent bash shell and `str_replace_editor`, whose **entire system prompt is a single line**:
+
+```text
+You are a helpful software engineer assistant.
+```
+
+The installer verifies on every run that this line is still present (and rewrites it if an upstream dsh update drops it), so **every time you open minimal mode, this is the first line sent to the model**.
+
+**The community-dubbed "strongest form"**: community posts (Reddit r/DeepSeek, X, Korean forums, etc.) speculate that DeepSeek 4 Pro may be overfitted to DSH-minimal-mode-like environments, and that `minimal mode + Thinking Max` performs best on continuous coding tasks. If you cannot use DSH minimal mode (e.g. a plain chat client), pasting this line at the very top of your custom prompt is said to approximate it.
+
+> ⚠️ **Disclaimer**: the above is community hearsay based on small-sample tests, **not an official DeepSeek statement**. Actual results vary by model version, task type and the rest of your prompt - please test it yourself before adopting. This installer only guarantees the prompt line exists and **makes no claim about its effectiveness**.
 
 ## Using the Shortcut
 
@@ -122,11 +146,12 @@ Popular community plugins (search [npm](https://www.npmjs.com/search?q=dsh) for 
    - Wait for it to be ready (polls every 2 seconds)
    - Open your browser at `http://127.0.0.1:3080`
 3. On first launch, configure your model:
-   - Go to **Settings → Models**
+   - Go to **Settings -> Models**
    - Enter your DeepSeek API Key
    - Save
-4. Select a workspace directory
-5. Start a session and send tasks!
+4. Choose a session preset (standard / code / minimal mode - see ["Minimal mode & the 'strongest form' prompt"](#minimal-mode--the-strongest-form-prompt))
+5. Select a workspace directory
+6. Start a session and send tasks!
 
 ## Project Structure
 

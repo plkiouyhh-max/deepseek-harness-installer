@@ -8,18 +8,19 @@
     Custom desktop path. Defaults to the system desktop folder.
 .PARAMETER Plugins
     Space-separated list of dsh plugin packages to install.
-    Defaults to 'dsh-web-plugin-manager' (adds a plugin marketplace to the Web UI).
+    Defaults to 'dshmarket' (the awesome-dsh-plugin catalog inside the Web UI),
+    'dsh-better-sidebar' and 'dsh-usage-stats'.
 .PARAMETER NoPlugins
     Skip plugin installation entirely.
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File install.ps1
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File install.ps1 -Plugins "dsh-web-plugin-manager","dsh-better-sidebar"
+    powershell -ExecutionPolicy Bypass -File install.ps1 -Plugins "dshmarket","dsh-better-sidebar"
 #>
 
 param(
     [string]$DesktopPath = "",
-    [string[]]$Plugins = @("dsh-web-plugin-manager"),
+    [string[]]$Plugins = @("dshmarket", "dsh-better-sidebar", "dsh-usage-stats"),
     [switch]$NoPlugins
 )
 
@@ -51,11 +52,50 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "  dsh installed successfully." -ForegroundColor Green
 
-# === Step 3: Install plugins ===
+# === Step 3: Verify minimal-mode system prompt ===
+# The 'minimal' agent preset's complete persona is the single line
+# "You are a helpful software engineer assistant." - the community-dubbed
+# "strongest form" prompt. Verify it survives dsh updates; rewrite if missing.
+Write-Host "[3/7] Verifying minimal-mode system prompt..." -ForegroundColor Yellow
+$MinimalLine = "You are a helpful software engineer assistant."
+try {
+    $npmRoot = (npm root -g | Out-String).Trim()
+    $presetFile = Join-Path $npmRoot "@deepseek-ai\dsh\config\agent-presets\minimal\agent.cordis.yml"
+    if (Test-Path $presetFile) {
+        if (Select-String -Path $presetFile -Pattern ([regex]::Escape("text: $MinimalLine")) -Quiet) {
+            Write-Host "  OK: minimal mode persona already starts with the line." -ForegroundColor Green
+        } else {
+            $lines = Get-Content $presetFile
+            $inPersona = $false
+            $patched = $false
+            for ($i = 0; $i -lt $lines.Count; $i++) {
+                if ($lines[$i] -match '^\s*-\s*id:\s*(\S+)\s*$') { $inPersona = ($Matches[1] -eq 'persona'); continue }
+                if ($inPersona -and $lines[$i] -match '^\s*text:\s*') {
+                    $lines[$i] = $lines[$i] -replace '(^\s*text:\s*).*$', ('$1' + $MinimalLine)
+                    # UTF-8 without BOM, so YAML loaders never see a BOM
+                    [System.IO.File]::WriteAllLines($presetFile, $lines, (New-Object System.Text.UTF8Encoding($false)))
+                    $patched = $true
+                    break
+                }
+            }
+            if ($patched) {
+                Write-Host "  Patched: persona text reset to '$MinimalLine'" -ForegroundColor Green
+            } else {
+                Write-Host "  WARNING: could not locate the persona 'text:' entry; skipping." -ForegroundColor Yellow
+            }
+        }
+    } else {
+        Write-Host "  WARNING: minimal preset not found (dsh layout may have changed): $presetFile" -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "  WARNING: could not verify minimal preset: $_" -ForegroundColor Yellow
+}
+
+# === Step 4: Install plugins ===
 if ($NoPlugins) {
-    Write-Host "[3/6] Skipping plugins (-NoPlugins)." -ForegroundColor Yellow
+    Write-Host "[4/7] Skipping plugins (-NoPlugins)." -ForegroundColor Yellow
 } else {
-    Write-Host "[3/6] Installing plugins: $($Plugins -join ', ')" -ForegroundColor Yellow
+    Write-Host "[4/7] Installing plugins: $($Plugins -join ', ')" -ForegroundColor Yellow
 
     # dsh plugin requires pnpm
     $pnpmOk = $false
@@ -85,8 +125,8 @@ if ($NoPlugins) {
     }
 }
 
-# === Step 4: Determine desktop path ===
-Write-Host "[4/6] Locating desktop..." -ForegroundColor Yellow
+# === Step 5: Determine desktop path ===
+Write-Host "[5/7] Locating desktop..." -ForegroundColor Yellow
 if ([string]::IsNullOrEmpty($DesktopPath)) {
     $DesktopPath = [Environment]::GetFolderPath("Desktop")
 }
@@ -223,8 +263,8 @@ Write-Host "  Fallback icon saved: $icoPath" -ForegroundColor Green
 }
 Write-Host "  Icon: $icoPath" -ForegroundColor Green
 
-# === Step 6: Create launcher and shortcut ===
-Write-Host "[6/6] Creating desktop shortcut..." -ForegroundColor Yellow
+# === Step 7: Create launcher and shortcut ===
+Write-Host "[7/7] Creating desktop shortcut..." -ForegroundColor Yellow
 
 # Create PowerShell launcher (robust: no 'timeout' cmd dependency, error dialog on failure)
 $ps1Path = Join-Path $DesktopPath "dsh-start.ps1"
@@ -297,6 +337,6 @@ Write-Host ""
 Write-Host "  First time? Configure your model:" -ForegroundColor Yellow
 Write-Host "    Settings -> Models -> Enter API Key" -ForegroundColor White
 Write-Host ""
-Write-Host "  Manage plugins from the Web UI (dsh-web-plugin-manager)" -ForegroundColor Yellow
+Write-Host "  Manage plugins from the Web UI (dshmarket)" -ForegroundColor Yellow
 Write-Host "  or via: dsh plugin --profile web add <package>" -ForegroundColor White
 Write-Host ""
