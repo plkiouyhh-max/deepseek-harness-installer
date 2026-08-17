@@ -6,7 +6,7 @@
 
 本工具自动完成：
 - 全局安装 `@deepseek-ai/dsh` npm 包
-- 安装插件（默认装 `dshmarket` -- 把 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 全部 341 个社区插件目录装进 Web UI，可浏览/搜索/一键安装；另附 `dsh-better-sidebar` 侧边栏、`dsh-usage-stats` 用量看板、`@deepseek-ai/dsh-persona` 预设提示词引擎与 `dsh-minimal-banner` 可见横幅）
+- 安装插件（默认装 `dshmarket` 非官方社区市场 -- 把 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 全部 341 个社区插件目录装进 Web UI，可浏览/搜索/一键安装；`dsh-web-plugin-manager` 插件管理器；`dsh-better-sidebar` 侧边栏、`dsh-usage-stats` 用量看板、`@deepseek-ai/dsh-persona` 预设提示词引擎与 `dsh-minimal-banner` 可见横幅）
 - 校验极简模式（minimal）系统提示词包含 `You are a helpful software engineer assistant.`，缺失时自动回写，并把该行同时注入为**会话顶部可见的上下文消息**（见[下方「极简模式与『最强形态』提示词」](#极简模式与最强形态提示词)）
 - 使用 DeepSeek 官方 Logo 作为桌面图标（离线时回退自绘图标）
 - 创建一键快捷方式，点击即启动服务并打开浏览器
@@ -78,17 +78,21 @@ chmod +x scripts/install.sh
 
 ## 内置插件
 
-安装器默认安装四个插件：
+安装器默认安装六个插件：
 
 | 插件 | 说明 |
 |------|------|
-| `dshmarket` | [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 官方配套市场：把全部 341 个社区插件目录装进 Web UI，浏览、搜索、看 star、一键安装/更新/卸载，多数插件免重启生效。目录数据直连 `awesome-dsh-plugin.com`（国内可直连），失败自动回退包内快照，无需代理 |
+| `dshmarket` | **非官方**社区市场（[awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 目录配套）：把全部 341 个社区插件目录装进 Web UI，浏览、搜索、看 star、一键安装/更新/卸载，多数插件免重启生效。目录数据直连 `awesome-dsh-plugin.com`（国内可直连），失败自动回退包内快照，**一般无需代理**。安装器会自动在其界面标题上打「非官方」标识（见下方说明） |
+| `dsh-web-plugin-manager` | 官方风格的插件管理器：设置 → 插件里的「管理 / 环境」标签页，可安装/启停/卸载**任意** npm 包名、`github:user/repo`、tarball 或本地路径的插件（不受目录白名单限制）。其「市场」标签页数据来自 GitHub，**国内访问需代理** |
 | `dsh-better-sidebar` | VSCode 风格侧边栏（资源管理器 / 终端 / Git / 浏览器） |
 | `dsh-usage-stats` | GitHub 风格用量热力图看板：按工作区统计使用次数与 Token 花费（含缓存命中率）、DeepSeek 账户余额查询 |
 | `@deepseek-ai/dsh-persona` | 预设提示词引擎：极简/标准模式的系统提示词（含极简模式那行 `You are a helpful software engineer assistant.`）由它注入。**Web profile 默认不带**，缺了它极简模式就没有系统提示词 |
 | `dsh-minimal-banner`（本地插件） | 极简模式可见横幅：每个极简会话开头把这行提示词以**上下文消息**形式显示在会话顶部（系统提示词本体仍是不可见的），随安装器分发、自动挂入极简预设 |
 
-> 旧默认市场 `dsh-web-plugin-manager`（只管理已装插件）仍可手动安装：`dsh plugin --profile web add dsh-web-plugin-manager`
+> **关于「官方/非官方」与代理（VPN）的说明**
+> - DSH 官方（`@deepseek-ai/dsh`）本身**没有**插件市场，官方只提供 `dsh plugin` 命令（pnpm 转发）与只读插件清单；上面两个市场都是社区插件。
+> - `dshmarket` 为非官方社区市场。因它的界面标题硬编码在包内，安装器会在安装后把 Web UI 里的标题改为「插件市场（非官方）」（英文 `Plugin Market (community)`）并在副标题注明「一般无需代理」。若日后升级 `dshmarket` 覆盖了该标识，重跑一次安装器即可恢复。
+> - 代理需求速查：`dshmarket` 目录数据（`awesome-dsh-plugin.com`）与 npm 安装**国内可直连，一般无需代理**；`dsh-web-plugin-manager` 的「市场」标签页与部分插件的 GitHub 源码链接走 GitHub，**国内通常需要代理**。
 
 **自定义要安装的插件：**
 

@@ -10,7 +10,7 @@ Automates the installation of [DeepSeek Harness](https://github.com/deepseek-ai/
 ## What This Skill Does
 
 1. Installs the `@deepseek-ai/dsh` npm package globally
-2. Installs plugins into the `web` profile (defaults: `dshmarket` - the awesome-dsh-plugin catalog of 341 community plugins inside the Web UI - plus `dsh-better-sidebar`, `dsh-usage-stats`, `@deepseek-ai/dsh-persona` and the bundled local `plugins/dsh-minimal-banner`); installs `pnpm` automatically if missing
+2. Installs plugins into the `web` profile (defaults: `dshmarket` - the unofficial community market with the awesome-dsh-plugin catalog of 341 community plugins inside the Web UI - plus `dsh-web-plugin-manager`, `dsh-better-sidebar`, `dsh-usage-stats`, `@deepseek-ai/dsh-persona` and the bundled local `plugins/dsh-minimal-banner`); installs `pnpm` automatically if missing. After installing, badges the dshmarket Web UI title as non-official ("插件市场（非官方）" / "Plugin Market (community)") by patching its hardcoded client-bundle labels; the badge is overwritten by a dshmarket upgrade - re-run the installer to re-apply. Note: DSH itself ships no official plugin market; the dshmarket catalog (`awesome-dsh-plugin.com`) and npm installs are reachable from mainland China without a proxy, while `dsh-web-plugin-manager`'s Market tab is GitHub-backed and usually needs one
 3. Verifies the minimal-mode system prompt contains `You are a helpful software engineer assistant.` and rewrites it if missing; ensures the minimal preset carries the `dsh-minimal-banner` row so that line is also visible as a context message in every minimal-mode session (community-dubbed "strongest form" prompt; no effectiveness claim - see README)
 4. Uses the official DeepSeek logo as the icon (falls back to a generated icon offline)
 5. Creates a desktop shortcut that starts `dsh web` and opens the browser automatically
@@ -34,7 +34,7 @@ Detect the OS to choose the correct script:
 #### Windows (PowerShell)
 
 ```powershell
-# Default (installs dshmarket + dsh-better-sidebar + dsh-usage-stats + @deepseek-ai/dsh-persona)
+# Default (installs dshmarket + dsh-web-plugin-manager + dsh-better-sidebar + dsh-usage-stats + @deepseek-ai/dsh-persona)
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 
 # Custom plugin set
@@ -58,7 +58,7 @@ The script will:
 ```bash
 chmod +x scripts/install.sh
 
-# Default (installs dshmarket + dsh-better-sidebar + dsh-usage-stats + @deepseek-ai/dsh-persona)
+# Default (installs dshmarket + dsh-web-plugin-manager + dsh-better-sidebar + dsh-usage-stats + @deepseek-ai/dsh-persona)
 ./scripts/install.sh
 
 # Custom plugin set

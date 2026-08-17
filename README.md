@@ -6,7 +6,7 @@ One-click installer for [DeepSeek Harness](https://github.com/deepseek-ai/deepse
 
 This tool automatically:
 - Installs the `@deepseek-ai/dsh` npm package globally
-- Installs plugins (defaults to `dshmarket` - the [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) catalog of 341 community plugins inside the Web UI - plus `dsh-better-sidebar`, `dsh-usage-stats`, `@deepseek-ai/dsh-persona` and the bundled local `dsh-minimal-banner`)
+- Installs plugins (defaults to the unofficial `dshmarket` community market - the [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) catalog of 341 community plugins inside the Web UI - plus `dsh-web-plugin-manager`, `dsh-better-sidebar`, `dsh-usage-stats`, `@deepseek-ai/dsh-persona` and the bundled local `dsh-minimal-banner`)
 - Verifies the minimal-mode system prompt contains `You are a helpful software engineer assistant.` and rewrites it if missing, and also surfaces that line as a **visible context message** at the top of every minimal-mode session (see ["Minimal mode & the 'strongest form' prompt"](#minimal-mode--the-strongest-form-prompt))
 - Uses the official DeepSeek logo as the desktop icon (offline fallback: generated icon)
 - Creates a one-click desktop shortcut that starts the service and opens the browser
@@ -78,17 +78,21 @@ chmod +x scripts/install.sh
 
 ## Bundled Plugins
 
-By default the installer adds four plugins:
+By default the installer adds six plugins:
 
 | Plugin | Description |
 |--------|-------------|
-| `dshmarket` | The official companion market for [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin): browse, search, check stars and one-click install/update/uninstall all 341 community plugins from inside the Web UI - most take effect without a restart. Catalog is fetched directly from `awesome-dsh-plugin.com` (reachable from mainland China without a proxy) and falls back to the bundled snapshot when offline |
+| `dshmarket` | **Unofficial** community market (companion to the [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) catalog): browse, search, check stars and one-click install/update/uninstall all 341 community plugins from inside the Web UI - most take effect without a restart. Catalog is fetched directly from `awesome-dsh-plugin.com` (reachable from mainland China without a proxy) and falls back to the bundled snapshot when offline. The installer badges its UI title as "Plugin Market (community)" |
+| `dsh-web-plugin-manager` | Official-style plugin manager: the Manage/Environments tabs under Settings -> Plugins can install/enable/uninstall **any** npm package, `github:user/repo`, tarball or local path (no catalog allow-list). Its Market tab is GitHub-backed and typically needs a proxy from mainland China |
 | `dsh-better-sidebar` | VSCode-like sidebar (explorer / terminal / git / browser) |
 | `dsh-usage-stats` | GitHub-style usage heatmap: per-workspace counts, token spend (with cache hit rate) and DeepSeek balance lookup |
 | `@deepseek-ai/dsh-persona` | The persona engine that injects the presets' system prompts - including the minimal-mode line `You are a helpful software engineer assistant.`. **The web profile does not bundle it**; without it minimal mode sends no system prompt at all |
 | `dsh-minimal-banner` (local plugin) | A visible banner for minimal mode: shows that same line as a **context message** at the top of every minimal-mode session (the system prompt itself stays invisible). Bundled with this installer and mounted into the minimal preset |
 
-> The previous default marketplace `dsh-web-plugin-manager` (manages installed plugins only) can still be installed manually: `dsh plugin --profile web add dsh-web-plugin-manager`
+> **Official vs community, and proxy (VPN) notes**
+> - The official `@deepseek-ai/dsh` package ships **no** plugin market - only the `dsh plugin` command (a pnpm forwarder) and a read-only plugin inventory. Both markets above are community plugins.
+> - `dshmarket` is an unofficial community market. Its UI labels are hardcoded in the package, so the installer rewrites the Web UI title to `Plugin Market (community)` / `插件市场（非官方）` and annotates the subtitle with "usually works without a proxy". Upgrading dshmarket overwrites the badge; re-run the installer to re-apply.
+> - Proxy quick reference: the `dshmarket` catalog (`awesome-dsh-plugin.com`) and npm installs are **directly reachable from mainland China - no proxy needed**; the `dsh-web-plugin-manager` Market tab and some plugins' GitHub source links go through GitHub and **usually need a proxy there**.
 
 **Customize which plugins get installed:**
 

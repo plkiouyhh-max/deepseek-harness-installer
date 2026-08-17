@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     DeepSeek Harness (dsh) installer for Windows.
 .DESCRIPTION
@@ -8,10 +8,12 @@
     Custom desktop path. Defaults to the system desktop folder.
 .PARAMETER Plugins
     Space-separated list of dsh plugin packages to install.
-    Defaults to 'dshmarket' (the awesome-dsh-plugin catalog inside the Web UI),
-    'dsh-better-sidebar', 'dsh-usage-stats' and '@deepseek-ai/dsh-persona'
-    (the persona engine that injects the minimal/standard presets' system
-    prompt; the web profile does not bundle it by default).
+    Defaults to 'dshmarket' (the unofficial community market with the
+    awesome-dsh-plugin catalog inside the Web UI; the installer badges its
+    UI title as non-official), 'dsh-web-plugin-manager', 'dsh-better-sidebar',
+    'dsh-usage-stats' and '@deepseek-ai/dsh-persona' (the persona engine that
+    injects the minimal/standard presets' system prompt; the web profile does
+    not bundle it by default).
 .PARAMETER NoPlugins
     Skip plugin installation entirely.
 .EXAMPLE
@@ -22,7 +24,7 @@
 
 param(
     [string]$DesktopPath = "",
-    [string[]]$Plugins = @("dshmarket", "dsh-better-sidebar", "dsh-usage-stats", "@deepseek-ai/dsh-persona"),
+    [string[]]$Plugins = @("dshmarket", "dsh-web-plugin-manager", "dsh-better-sidebar", "dsh-usage-stats", "@deepseek-ai/dsh-persona"),
     [switch]$NoPlugins
 )
 
@@ -186,6 +188,29 @@ if ($NoPlugins) {
         } else {
             Write-Host "  Plugins installed. They load on next 'dsh web' start." -ForegroundColor Green
         }
+    }
+
+    # Badge the community market (dshmarket) as non-official in the Web UI.
+    # Its labels are hardcoded in the shipped client bundle, so we patch the
+    # strings in place (served straight from disk, hot-reloaded within ~1s;
+    # a pnpm update of dshmarket overwrites this, so re-run to re-apply).
+    $marketClient = Join-Path $env:USERPROFILE ".dsh\profiles\web\node_modules\dshmarket\client\client.js"
+    if (Test-Path $marketClient) {
+        $ErrorActionPreference = "Continue"
+        $txt = [System.IO.File]::ReadAllText($marketClient)
+        if ($txt.Contains("插件市场（非官方）") -or $txt.Contains("Plugin Market (community)")) {
+            Write-Host "  OK: community market already badged as non-official." -ForegroundColor Green
+        } else {
+            $txt = $txt.Replace('nav: "插件市场"', 'nav: "插件市场（非官方）"')
+            $txt = $txt.Replace('subtitle: "发现社区为 DeepSeek Harness 打造的能力"', 'subtitle: "发现社区为 DeepSeek Harness 打造的能力（非官方目录，数据源可直连，一般无需代理）"')
+            $txt = $txt.Replace('设置 -> 插件市场 -> 主题', '设置 -> 插件市场（非官方） -> 主题')
+            $txt = $txt.Replace('nav: "Plugin Market"', 'nav: "Plugin Market (community)"')
+            $txt = $txt.Replace('subtitle: "Discover community plugins for DeepSeek Harness"', 'subtitle: "Discover community plugins for DeepSeek Harness (community catalog; usually works without a proxy)"')
+            $txt = $txt.Replace('Settings -> Plugin Market -> Themes', 'Settings -> Plugin Market (community) -> Themes')
+            [System.IO.File]::WriteAllText($marketClient, $txt, (New-Object System.Text.UTF8Encoding($false)))
+            Write-Host "  Patched: community market badged as non-official in the Web UI." -ForegroundColor Green
+        }
+        $ErrorActionPreference = "Stop"
     }
 }
 

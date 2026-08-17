@@ -6,7 +6,7 @@
 # and creates a .desktop entry (Linux) or .command script (macOS).
 #
 # Usage:
-#   ./install.sh                                  # default: dshmarket + dsh-better-sidebar + dsh-usage-stats + @deepseek-ai/dsh-persona
+#   ./install.sh                                  # default: dshmarket + dsh-web-plugin-manager + dsh-better-sidebar + dsh-usage-stats + @deepseek-ai/dsh-persona
 #   PLUGINS="a b" ./install.sh                    # custom plugin list (space-separated)
 #   PLUGINS="" ./install.sh                       # skip plugins
 #
@@ -16,7 +16,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Plugin list (override with PLUGINS env var; empty string disables)
-DEFAULT_PLUGINS="dshmarket dsh-better-sidebar dsh-usage-stats @deepseek-ai/dsh-persona"
+DEFAULT_PLUGINS="dshmarket dsh-web-plugin-manager dsh-better-sidebar dsh-usage-stats @deepseek-ai/dsh-persona"
 PLUGINS="${PLUGINS-${DEFAULT_PLUGINS}}"
 
 echo ""
@@ -179,6 +179,30 @@ else
             fi
         done
         [ -n "$FAILED" ] || echo "  Plugins installed. They load on next 'dsh web' start."
+    fi
+
+    # Badge the community market (dshmarket) as non-official in the Web UI.
+    # Its labels are hardcoded in the shipped client bundle, so we patch the
+    # strings in place (served straight from disk, hot-reloaded within ~1s;
+    # a pnpm update of dshmarket overwrites this, so re-run to re-apply).
+    MARKET_CLIENT="$HOME/.dsh/profiles/web/node_modules/dshmarket/client/client.js"
+    if [ -f "$MARKET_CLIENT" ]; then
+        if grep -q "插件市场（非官方）" "$MARKET_CLIENT" \
+           || grep -q "Plugin Market (community)" "$MARKET_CLIENT"; then
+            echo "  OK: community market already badged as non-official."
+        else
+            sed -i.bak \
+                -e 's/nav: "插件市场"/nav: "插件市场（非官方）"/' \
+                -e 's/subtitle: "发现社区为 DeepSeek Harness 打造的能力"/subtitle: "发现社区为 DeepSeek Harness 打造的能力（非官方目录，数据源可直连，一般无需代理）"/' \
+                -e 's/设置 -> 插件市场 -> 主题/设置 -> 插件市场（非官方） -> 主题/' \
+                -e 's/nav: "Plugin Market"/nav: "Plugin Market (community)"/' \
+                -e 's/subtitle: "Discover community plugins for DeepSeek Harness"/subtitle: "Discover community plugins for DeepSeek Harness (community catalog; usually works without a proxy)"/' \
+                -e 's|Settings -> Plugin Market -> Themes|Settings -> Plugin Market (community) -> Themes|' \
+                "$MARKET_CLIENT" \
+                && rm -f "$MARKET_CLIENT.bak" \
+                && echo "  Patched: community market badged as non-official in the Web UI." \
+                || echo "  WARNING: failed to badge the community market."
+        fi
     fi
 fi
 
